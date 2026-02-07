@@ -3,7 +3,7 @@ name: Auto Update from Google Sheets
 on:
   # Запускається кожні 15 хвилин
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 */3 * * *'
   
   # Можна запустити вручну
   workflow_dispatch:

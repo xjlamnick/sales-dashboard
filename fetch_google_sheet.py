@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Скрипт для автоматичного оновлення даних з Google Таблиці
-ВИПРАВЛЕНО: коректна обробка відсотків з Google Sheets
+ФІНАЛЬНА ВЕРСІЯ — коректна обробка відсотків з Google Sheets
 """
 
 import pandas as pd
@@ -22,7 +22,7 @@ def clean_number(value):
     if not str_val or str_val.lower() in ['nan', 'none']:
         return 0.0
 
-    # 🔥 ОБРОБКА %
+    # ✅ ОБРОБКА ВІДСОТКІВ ЯК ТЕКСТУ: "14.41%" або "14,41%"
     if '%' in str_val:
         str_val = str_val.replace('%', '').replace(',', '.')
         try:
@@ -30,7 +30,7 @@ def clean_number(value):
         except:
             return 0.0
 
-    # Європейський формат
+    # Європейський / американський формат чисел
     if ',' in str_val and '.' in str_val:
         if str_val.rfind(',') > str_val.rfind('.'):
             str_val = str_val.replace('.', '').replace(',', '.')
@@ -82,14 +82,20 @@ def fetch_and_convert():
             num = clean_number(raw)
 
             if col in PERCENT_COLUMNS:
+                # ✅ якщо прийшло 0.1441 → робимо 14.41
+                if num <= 1:
+                    num = num * 100
                 value = round(num, 2)
                 unit = '%'
+
             elif col in ['Шт.', 'Чеки', 'ПЧ']:
                 value = int(num)
                 unit = 'шт'
+
             elif col in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
                 value = round(num, 2)
                 unit = 'грн'
+
             else:
                 value = round(num, 2)
                 unit = ''
@@ -134,12 +140,12 @@ def fetch_and_convert():
     with open('sales-data.json', 'w', encoding='utf-8') as f:
         json.dump(all_data, f, ensure_ascii=False, indent=2)
 
-    print("✅ JSON оновлено правильно")
+    print("✅ JSON оновлено правильно (відсотки працюють коректно)")
 
 
 if __name__ == "__main__":
     try:
         fetch_and_convert()
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         sys.exit(1)

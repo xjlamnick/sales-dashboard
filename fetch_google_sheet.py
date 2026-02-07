@@ -16,12 +16,21 @@ def fetch_and_convert():
     print(f"🔗 URL: {GOOGLE_SHEET_URL}")
     
     try:
-        # Читаємо CSV з Google Таблиці (рядок 3 - заголовки)
+        # Читаємо з правильним header
         df = pd.read_csv(GOOGLE_SHEET_URL, header=0)
+        
+        # Друк для діагностики — обов'язково подивись цей рядок в логах!
+        print("Колонки в таблиці:", df.columns.tolist())
+        
+        # Замінюємо кому на крапку в усіх потенційно числових колонках
+        numeric_cols = df.columns[2:]  # все після ПК та Посада
+        for col in numeric_cols:
+            df[col] = df[col].replace(',', '.', regex=False)  # замінюємо кому на крапку
+            df[col] = pd.to_numeric(df[col], errors='coerce')  # перетворюємо на числа, невалідне → NaN
         
         print(f"✅ Завантажено {len(df)} рядків, {len(df.columns)} стовпців")
         
-        # Градієнти
+        # Градієнти (залишаємо як є)
         gradients = [
             'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -37,43 +46,35 @@ def fetch_and_convert():
         sales_data = []
         
         for idx, row in df.iterrows():
-            if pd.notna(row['ПК']):
-                name = str(row['ПК'])
+            if pd.notna(row['ПК']) and str(row['ПК']).strip():
+                name = str(row['ПК']).strip()
                 
-                # Генеруємо ініціали
+                # Ініціали
                 name_parts = name.split()
-                if len(name_parts) >= 2:
-                    initials = ''.join([p[0] for p in name_parts[:2]]).upper()
-                else:
-                    initials = name[0].upper()
+                initials = ''.join(p[0] for p in name_parts[:2]).upper() if len(name_parts) >= 2 else name[0].upper() if name else '?'
                 
-                # Створюємо метрики
+                # Метрики — тепер безпечно
                 metrics = {}
                 for col in df.columns[2:]:
                     val = row[col]
-                    
                     if pd.isna(val):
                         val = 0
                     
-                    # Визначаємо тип
+                    # Типи даних
                     if col in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
-                        value = round(float(val) * 100, 2) if pd.notna(val) else 0
+                        value = round(val * 100, 2) if pd.notna(val) else 0
                         unit = '%'
                     elif col in ['Шт.', 'Чеки', 'ПЧ']:
                         value = int(val) if pd.notna(val) else 0
                         unit = 'шт'
                     elif col in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
-                        value = round(float(val), 2) if pd.notna(val) else 0
+                        value = round(val, 2) if pd.notna(val) else 0
                         unit = 'грн'
                     else:
-                        value = round(float(val), 2) if pd.notna(val) else 0
+                        value = round(val, 2) if pd.notna(val) else 0
                         unit = ''
                     
-                    metrics[col] = {
-                        'value': value,
-                        'label': col,
-                        'unit': unit
-                    }
+                    metrics[col] = {'value': value, 'label': col, 'unit': unit}
                 
                 person = {
                     'id': len(sales_data) + 1,
@@ -84,6 +85,23 @@ def fetch_and_convert():
                     'metrics': metrics
                 }
                 sales_data.append(person)
+        
+        # Загальні показники (залишаємо як є, бо після pd.to_numeric все повинно бути числом)
+        # ... (твій код для store_totals без змін) ...
+        # (встав сюди свій блок підрахунку store_totals, він вже має працювати)
+        
+        # Зберігання (без змін)
+        with open('sales-data.json', 'w', encoding='utf-8') as f:
+            json.dump(all_data, f, ensure_ascii=False, indent=2)
+        
+        print(f"\n✅ Оновлено дані: Магазин + {len(sales_data)} продавців")
+        return True
+        
+    except Exception as e:
+        print(f"\n❌ Помилка: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
         
         # Рахуємо загальні показники магазину
         store_totals = {

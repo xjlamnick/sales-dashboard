@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Команда продажів</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-bg: #fbfbfd;
+            --color-text: #1d1d1f;
+            --color-text-secondary: #6e6e73;
+            --color-card-bg: #ffffff;
+            --color-accent: #0071e3;
+            --color-border: #d2d2d7;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+            
+            /* Кольори для метрик */
+            --color-revenue: #0071e3;
+            --color-services: #34c759;
+            --color-acc: #ff9500;
+            --color-checks: #af52de;
+            --color-conversion: #ff2d55;
+            --color-uds: #5856d6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            background: rgba(251, 251, 253, 0.95);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .back-btn {
+            color: var(--color-accent);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .hero {
+            max-width: 1400px;
+            margin: 40px auto 30px;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 8vw, 56px);
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: clamp(16px, 4vw, 22px);
+            color: var(--color-text-secondary);
+            font-weight: 300;
+        }
+
+        .team-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 20px 60px;
+        }
+
+        .store-card-wrapper {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 0 0 10px 0;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .team-card {
+            background: var(--color-card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .team-card.store-card {
+            border: 2px solid #FFD700;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-content h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .card-content p {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 12px;
+            background: #f5f5f7;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Кольори для різних метрик */
+        .stat[data-metric="ТО"] .stat-value { color: var(--color-revenue); }
+        .stat[data-metric="Послуги грн"] .stat-value { color: var(--color-services); }
+        .stat[data-metric="Доля Послуг"] .stat-value { color: var(--color-services); }
+        .stat[data-metric="% Доля ACC"] .stat-value { color: var(--color-acc); }
+        .stat[data-metric="ПЧ"] .stat-value { color: var(--color-checks); }
+
+        .detail-page {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .detail-page.active {
+            display: block;
+        }
+
+        .detail-image {
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            color: white;
+            font-weight: 600;
+            margin: 0 auto 30px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .detail-info h1 {
+            font-size: clamp(24px, 6vw, 42px);
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .detail-info .position {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: var(--color-card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            border-left: 4px solid var(--color-accent);
+        }
+
+        .metric-card[data-metric="ТО"] { border-left-color: var(--color-revenue); }
+        .metric-card[data-metric="Послуги грн"] { border-left-color: var(--color-services); }
+        .metric-card[data-metric="Доля Послуг"] { border-left-color: var(--color-services); }
+        .metric-card[data-metric="% Доля ACC"] { border-left-color: var(--color-acc); }
+        .metric-card[data-metric="ПЧ"] { border-left-color: var(--color-checks); }
+        .metric-card[data-metric="Конверсія ПК"] { border-left-color: var(--color-conversion); }
+        .metric-card[data-metric="Доля УДС"] { border-left-color: var(--color-uds); }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .metric-card[data-metric="ТО"] .metric-value { color: var(--color-revenue); }
+        .metric-card[data-metric="Послуги грн"] .metric-value { color: var(--color-services); }
+        .metric-card[data-metric="Доля Послуг"] .metric-value { color: var(--color-services); }
+        .metric-card[data-metric="% Доля ACC"] .metric-value { color: var(--color-acc); }
+        .metric-card[data-metric="ПЧ"] .metric-value { color: var(--color-checks); }
+        .metric-card[data-metric="Конверсія ПК"] .metric-value { color: var(--color-conversion); }
+        .metric-card[data-metric="Доля УДС"] .metric-value { color: var(--color-uds); }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        .detailed-section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .detailed-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .detailed-metric {
+            background: var(--color-card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid #d2d2d7;
+        }
+
+        .detailed-metric h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detailed-metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .detailed-metric-unit {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: var(--color-text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .detailed-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">SalesTeam</div>
+            <a href="#" class="back-btn" id="backBtn" onclick="showHome(); return false;">← Назад</a>
+        </nav>
+    </header>
+
+    <div id="home-page">
+        <section class="hero">
+            <h1>Наша команда</h1>
+            <p>Професіонали, які досягають результатів</p>
+        </section>
+
+        <div class="team-container">
+            <div class="store-card-wrapper">
+                <h2 class="section-title">📊 Загальні показники</h2>
+                <div id="storeCard"></div>
+            </div>
+
+            <h2 class="section-title">👥 Команда продавців</h2>
+            <div class="team-grid" id="teamGrid">
+                <div class="loading">Завантаження...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detail-page" class="detail-page"></div>
+
+    <script>
+        let salesTeam = [];
+        const EMBEDDED_DATA = [{"id":0,"name":"Загальні показники магазину","position":"Всі продавці","initials":"МАГ","gradient":"linear-gradient(135deg, #FFD700 0%, #FFA500 100%)","metrics":{"ТО":{"value":2510143.8,"label":"ТО","unit":"грн"},"Шт.":{"value":465,"label":"Шт.","unit":"шт"},"Чеки":{"value":298,"label":"Чеки","unit":"шт"},"ASP":{"value":5330.6,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8043.76,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.55,"label":"КПЧ","unit":""},"ACC":{"value":332976.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.47,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":77019.3,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":2.43,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":19,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":18.61,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":14.32,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":617267.1,"label":"УДС","unit":"грн"},"Доля УДС":{"value":19.94,"label":"Доля УДС","unit":"%"}}},{"id":1,"name":"Бондаренко Володимир Володимирович","position":"продавец-консультант","initials":"БВ","gradient":"linear-gradient(135deg, #667eea 0%, #764ba2 100%)","metrics":{"ТО":{"value":811213.3,"label":"ТО","unit":"грн"},"Шт.":{"value":117,"label":"Шт.","unit":"шт"},"Чеки":{"value":66,"label":"Чеки","unit":"шт"},"ASP":{"value":6933.45,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":12291.11,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.77,"label":"КПЧ","unit":""},"ACC":{"value":134348.0,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":16.56,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":34074.3,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":4.2,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":5,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":32.98,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":23.23,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":284810.0,"label":"УДС","unit":"грн"},"Доля УДС":{"value":35.11,"label":"Доля УДС","unit":"%"}}},{"id":2,"name":"Жданов Олександр Миколайович","position":"продавец-консультант","initials":"ЖО","gradient":"linear-gradient(135deg, #f093fb 0%, #f5576c 100%)","metrics":{"ТО":{"value":394810.4,"label":"ТО","unit":"грн"},"Шт.":{"value":64,"label":"Шт.","unit":"шт"},"Чеки":{"value":47,"label":"Чеки","unit":"шт"},"ASP":{"value":6168.91,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8400.22,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.36,"label":"КПЧ","unit":""},"ACC":{"value":25984.3,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":6.58,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":19438.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":4.92,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":5,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":23.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":18.59,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":76758.6,"label":"УДС","unit":"грн"},"Доля УДС":{"value":19.44,"label":"Доля УДС","unit":"%"}}},{"id":3,"name":"Алтухов Олександр Сергійович","position":"продавец-консультант","initials":"АО","gradient":"linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)","metrics":{"ТО":{"value":320118.0,"label":"ТО","unit":"грн"},"Шт.":{"value":59,"label":"Шт.","unit":"шт"},"Чеки":{"value":40,"label":"Чеки","unit":"шт"},"ASP":{"value":5425.73,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8002.95,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.48,"label":"КПЧ","unit":""},"ACC":{"value":41667.2,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":13.02,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":2097.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.66,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":1,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":19.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":17.09,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":92772.2,"label":"УДС","unit":"грн"},"Доля УДС":{"value":28.98,"label":"Доля УДС","unit":"%"}}},{"id":4,"name":"Сторожук Артем Олегович","position":"продавец-консультант","initials":"СА","gradient":"linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)","metrics":{"ТО":{"value":267172.3,"label":"ТО","unit":"грн"},"Шт.":{"value":30,"label":"Шт.","unit":"шт"},"Чеки":{"value":21,"label":"Чеки","unit":"шт"},"ASP":{"value":8905.74,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":12722.49,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.43,"label":"КПЧ","unit":""},"ACC":{"value":7967.8,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":2.98,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":0.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.0,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":0,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":10.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":7.04,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":28499.9,"label":"УДС","unit":"грн"},"Доля УДС":{"value":10.67,"label":"Доля УДС","unit":"%"}}},{"id":5,"name":"Колодяжний Сергій Васильович","position":"продавец-консультант","initials":"КС","gradient":"linear-gradient(135deg, #fa709a 0%, #fee140 100%)","metrics":{"ТО":{"value":251409.1,"label":"ТО","unit":"грн"},"Шт.":{"value":73,"label":"Шт.","unit":"шт"},"Чеки":{"value":46,"label":"Чеки","unit":"шт"},"ASP":{"value":3443.96,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":5465.42,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.59,"label":"КПЧ","unit":""},"ACC":{"value":36092.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.36,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":12672.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":5.04,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":4,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":22.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":18.09,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":46077.8,"label":"УДС","unit":"грн"},"Доля УДС":{"value":18.33,"label":"Доля УДС","unit":"%"}}},{"id":6,"name":"Троя Андрій Васильович","position":"продавец-консультант","initials":"ТА","gradient":"linear-gradient(135deg, #30cfd0 0%, #330867 100%)","metrics":{"ТО":{"value":202308.3,"label":"ТО","unit":"грн"},"Шт.":{"value":38,"label":"Шт.","unit":"шт"},"Чеки":{"value":29,"label":"Чеки","unit":"шт"},"ASP":{"value":5323.9,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":6976.15,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.31,"label":"КПЧ","unit":""},"ACC":{"value":34847.7,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":17.23,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":5543.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":2.74,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":3,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":14.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":10.55,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":46549.9,"label":"УДС","unit":"грн"},"Доля УДС":{"value":23.01,"label":"Доля УДС","unit":"%"}}},{"id":7,"name":"Пінчук Поліна Вікторівна","position":"продавец-консультант","initials":"ПП","gradient":"linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)","metrics":{"ТО":{"value":174384.7,"label":"ТО","unit":"грн"},"Шт.":{"value":39,"label":"Шт.","unit":"шт"},"Чеки":{"value":27,"label":"Чеки","unit":"шт"},"ASP":{"value":4471.4,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":6458.69,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.44,"label":"КПЧ","unit":""},"ACC":{"value":24726.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.18,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":3096.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":1.78,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":1,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":13.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":11.5,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":41798.7,"label":"УДС","unit":"грн"},"Доля УДС":{"value":23.97,"label":"Доля УДС","unit":"%"}}},{"id":8,"name":"Котенков Нікіта Олександрович","position":"продавец-консультант","initials":"КН","gradient":"linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)","metrics":{"ТО":{"value":88727.7,"label":"ТО","unit":"грн"},"Шт.":{"value":45,"label":"Шт.","unit":"шт"},"Чеки":{"value":22,"label":"Чеки","unit":"шт"},"ASP":{"value":1971.73,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":4033.08,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":2.05,"label":"КПЧ","unit":""},"ACC":{"value":27342.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":30.82,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":99.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.11,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":0,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":10.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":8.5,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":0.0,"label":"УДС","unit":"грн"},"Доля УДС":{"value":0.0,"label":"Доля УДС","unit":"%"}}}];
+
+        async function loadData() {
+            try {
+                // Спочатку пробуємо завантажити з JSON файлу
+                const response = await fetch('sales-data.json');
+                if (!response.ok) throw new Error('Failed to load');
+                const data = await response.json();
+                
+                // Перший елемент - магазин, решта - продавці
+                const storeData = data[0];
+                salesTeam = data.slice(1);
+                
+                renderStoreCard(storeData);
+                renderTeamGrid();
+            } catch (error) {
+                console.log('Використовую вбудовані дані');
+                // Використовуємо вбудовані дані
+                const storeData = EMBEDDED_DATA[0];
+                salesTeam = EMBEDDED_DATA.slice(1);
+                
+                renderStoreCard(storeData);
+                renderTeamGrid();
+            }
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('uk-UA', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        function renderStoreCard(store) {
+            const card = document.getElementById('storeCard');
+            
+            const to = store.metrics['ТО'] || {};
+            const services = store.metrics['Послуги грн'] || {};
+            const servicesShare = store.metrics['Доля Послуг'] || {};
+            const accShare = store.metrics['% Доля ACC'] || {};
+            const firstChecks = store.metrics['ПЧ'] || {};
+            
+            card.innerHTML = `
+                <div class="team-card store-card" onclick="showDetail(0)">
+                    <div class="card-image" style="background: ${store.gradient}">
+                        ${store.initials}
+                    </div>
+                    <div class="card-content">
+                        <h3>${store.name}</h3>
+                        <p>${store.position}</p>
+                        <div class="card-stats">
+                            <div class="stat" data-metric="ТО">
+                                <span class="stat-value">${formatNumber(to.value / 1000)}К</span>
+                                <span class="stat-label">Товарообіг</span>
+                            </div>
+                            <div class="stat" data-metric="Послуги грн">
+                                <span class="stat-value">${formatNumber(services.value / 1000)}К</span>
+                                <span class="stat-label">Послуги</span>
+                            </div>
+                            <div class="stat" data-metric="Доля Послуг">
+                                <span class="stat-value">${formatNumber(servicesShare.value)}%</span>
+                                <span class="stat-label">Доля послуг</span>
+                            </div>
+                            <div class="stat" data-metric="% Доля ACC">
+                                <span class="stat-value">${formatNumber(accShare.value)}%</span>
+                                <span class="stat-label">Доля ACC</span>
+                            </div>
+                            <div class="stat" data-metric="ПЧ">
+                                <span class="stat-value">${firstChecks.value}</span>
+                                <span class="stat-label">Перші чеки</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTeamGrid() {
+            const grid = document.getElementById('teamGrid');
+            let html = '';
+            
+            salesTeam.forEach(person => {
+                const to = person.metrics['ТО'] || {};
+                const services = person.metrics['Послуги грн'] || {};
+                const servicesShare = person.metrics['Доля Послуг'] || {};
+                const accShare = person.metrics['% Доля ACC'] || {};
+                const firstChecks = person.metrics['ПЧ'] || {};
+                
+                html += `
+                    <div class="team-card" onclick="showDetail(${person.id})">
+                        <div class="card-image" style="background: ${person.gradient}">
+                            ${person.initials}
+                        </div>
+                        <div class="card-content">
+                            <h3>${person.name}</h3>
+                            <p>${person.position}</p>
+                            <div class="card-stats">
+                                <div class="stat" data-metric="ТО">
+                                    <span class="stat-value">${formatNumber(to.value / 1000)}К</span>
+                                    <span class="stat-label">Товарообіг</span>
+                                </div>
+                                <div class="stat" data-metric="Послуги грн">
+                                    <span class="stat-value">${formatNumber(services.value / 1000)}К</span>
+                                    <span class="stat-label">Послуги</span>
+                                </div>
+                                <div class="stat" data-metric="Доля Послуг">
+                                    <span class="stat-value">${formatNumber(servicesShare.value)}%</span>
+                                    <span class="stat-label">Доля послуг</span>
+                                </div>
+                                <div class="stat" data-metric="% Доля ACC">
+                                    <span class="stat-value">${formatNumber(accShare.value)}%</span>
+                                    <span class="stat-label">Доля ACC</span>
+                                </div>
+                                <div class="stat" data-metric="ПЧ">
+                                    <span class="stat-value">${firstChecks.value}</span>
+                                    <span class="stat-label">Перші чеки</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function showDetail(id) {
+            let person;
+            
+            if (id === 0) {
+                // Використовуємо вбудовані дані магазину
+                person = EMBEDDED_DATA[0];
+                renderDetailPage(person);
+                return;
+            }
+            
+            person = salesTeam.find(p => p.id === id);
+            if (!person) return;
+            
+            renderDetailPage(person);
+        }
+
+        function renderDetailPage(person) {
+            document.getElementById('home-page').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'block';
+            
+            const detailPage = document.getElementById('detail-page');
+            detailPage.classList.add('active');
+
+            // Топ метрики з кольорами
+            const topKeys = ['ТО', 'Послуги грн', 'Доля Послуг', '% Доля ACC', 'ПЧ', 'Конверсія ПК', 'Доля УДС'];
+            let topMetricsHtml = '';
+            topKeys.forEach(key => {
+                const metric = person.metrics[key];
+                if (metric) {
+                    topMetricsHtml += `
+                        <div class="metric-card" data-metric="${key}">
+                            <div class="metric-value">${formatNumber(metric.value)}${metric.unit}</div>
+                            <div class="metric-label">${metric.label}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Решта метрик
+            let detailedMetricsHtml = '';
+            Object.keys(person.metrics).forEach(key => {
+                if (!topKeys.includes(key)) {
+                    const metric = person.metrics[key];
+                    detailedMetricsHtml += `
+                        <div class="detailed-metric">
+                            <h3>${metric.label}</h3>
+                            <div class="detailed-metric-value">${formatNumber(metric.value)}</div>
+                            <div class="detailed-metric-unit">${metric.unit}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            detailPage.innerHTML = `
+                <div class="detail-image" style="background: ${person.gradient}">${person.initials}</div>
+                <div class="detail-info">
+                    <h1>${person.name}</h1>
+                    <p class="position">${person.position}</p>
+                    <div class="metrics-grid">${topMetricsHtml}</div>
+                    ${detailedMetricsHtml ? `<h2 class="detailed-section-title">Додаткові показники</h2><div class="detailed-metrics">${detailedMetricsHtml}</div>` : ''}
+                </div>
+            `;
+
+            window.scrollTo(0, 0);
+        }
+
+        function showHome() {
+            document.getElementById('detail-page').classList.remove('active');
+            document.getElementById('home-page').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

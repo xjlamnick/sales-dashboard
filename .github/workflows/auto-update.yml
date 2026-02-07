@@ -1,75 +1,33 @@
-name: Auto Update from Google Sheets
+name: Синхронізація продажів з Google Sheets
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
-
-  workflow_dispatch:
-
-  push:
-    branches: [ main ]
+    - cron: '0 */3 * * *'     # кожні 3 години (можна змінити)
+  workflow_dispatch:          # кнопка «Run workflow» вручну
 
 jobs:
   update:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Завантажити свіжий CSV
+        uses: githubocto/flat@v3
         with:
-          fetch-depth: 0
+          http_url: https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv   # ← встав своє посилання
+          downloaded_filename: sales.csv     # ім'я файлу в репозиторії
 
-      - name: Configure Git
+      # Якщо твоєму сайту потрібен JSON замість CSV — розкоментуй цей блок:
+      # - name: Конвертувати CSV → JSON
+      #   run: |
+      #     npm install csvtojson
+      #     npx csvtojson sales.csv > sales.json
+      #     git add sales.json
+
+      - name: Запушити зміни (якщо є)
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas
-
-      - name: Update data from Google Sheets
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: |
-          echo "Current directory:"
-          pwd
-          
-          echo "Files in current directory:"
-          ls -la
-          
-          if [ -f "update_data.py" ]; then
-            echo "Found update_data.py → running..."
-            python update_data.py
-          else
-            echo "ERROR: update_data.py NOT FOUND"
-            echo "Please make sure the file exists in the repository root"
-            exit 1
-          fi
-
-      - name: Commit and push changes if any
-        run: |
-          git add .
-          
-          # Перевіряємо, чи є реальні зміни
-          git diff --staged --quiet
-          if [ $? -eq 0 ]; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          
-          git commit -m "🔄 Auto-update data from Google Sheets $(date '+%Y-%m-%d %H:%M:%S UTC')"
-          
-          # Спроба push → якщо не вийде, pull + retry
-          git push origin HEAD:main || {
-            echo "Push rejected → pulling and retrying"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          }
-      
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add sales.csv
+          git commit -m "Автооновлення продажів з Google Sheets" || exit 0
+          git push

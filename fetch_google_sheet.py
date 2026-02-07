@@ -46,52 +46,76 @@ def fetch_and_convert():
         
         print(f"🎯 Використовуємо колонки: '{name_col}' (ПК), '{pos_col}' (Посада)")
         
-        for idx, row in df.iterrows():
-            name_raw = str(row[name_col]).strip()
-            if name_raw and name_raw.lower() not in ['пк', 'назва', 'імя']:  # Пропускаємо заголовки
-                # Генеруємо ініціали
-                name_parts = name_raw.split()
-                initials = ''.join([p[0] for p in name_parts[:2]]).upper() if len(name_parts) >= 2 else name_raw[0].upper()
-                
-                # Створюємо метрики (з 3-ї колонки)
-                metrics = {}
-                for col in df.columns[2:]:
-                    val = row.get(col, 0)
-                    if pd.isna(val):
-                        val = 0
-                    
-                    col_name = str(col).strip()
-                    
-                    # Типи метрик (як у твоїй таблиці: ТО, Шт., Чеки, ASP...)
-                    if any(x in col_name for x in ['%', 'Доля', 'Конверсія']):
-                        value = round(float(val) * 100, 2) if pd.notna(val) else 0
-                        unit = '%'
-                    elif any(x in col_name for x in ['Шт.', 'Чеки', 'ПЧ', 'КПЧ']):
-                        value = int(float(val)) if pd.notna(val) else 0
-                        unit = 'шт'
-                    elif any(x in col_name for x in ['ТО', 'ASP', 'Чек', 'ACC', 'Послуги', 'УДС']):
-                        value = round(float(val), 2) if pd.notna(val) else 0
-                        unit = 'грн'
-                    else:
-                        value = round(float(val), 2) if pd.notna(val) else 0
-                        unit = ''
-                    
-                    metrics[col_name] = {
-                        'value': value,
-                        'label': col_name,
-                        'unit': unit
-                    }
-                
-                person = {
-                    'id': len(sales_data) + 1,
-                    'name': name_raw,
-                    'position': str(row.get(pos_col, 'продавец-консультант')).strip(),
-                    'initials': initials,
-                    'gradient': gradients[len(sales_data) % len(gradients)],
-                    'metrics': metrics
-                }
-                sales_data.append(person)
-                print(f"   👤 Додано: {name_raw}")
+        # Автоматично визначаємо колонку з іменами продавців
+name_column = None
+position_column = None
+
+# Шукаємо першу колонку, яка не є числовою і має довгі рядки (імена)
+for col in df.columns:
+    first_val = str(df[col].iloc[0]).strip()
+    if len(first_val) > 5 and ' ' in first_val:  # ймовірно ім'я + прізвище
+        name_column = col
+        break
+
+if name_column is None:
+    # якщо не знайшли — беремо першу колонку
+    name_column = df.columns[0]
+
+# Друга колонка — зазвичай посада
+position_column = df.columns[1] if len(df.columns) > 1 else None
+
+print(f"Використовуємо колонку для імен: '{name_column}'")
+print(f"Використовуємо колонку для посад: '{position_column}'")
+
+sales_data = []
+
+for idx, row in df.iterrows():
+    name = str(row[name_column]).strip()
+    if not name or name.lower() in ['пк', 'посада', 'заголовок', '']:
+        continue  # пропускаємо заголовки або порожні рядки
+
+    # Генеруємо ініціали
+    name_parts = name.split()
+    initials = ''.join([p[0] for p in name_parts[:2]]).upper() if len(name_parts) >= 2 else name[0].upper()
+
+    # позиція
+    position = str(row.get(position_column, 'продавець-консультант')).strip() if position_column else 'продавець-консультант'
+
+    # метрики — всі колонки після другої
+    metrics = {}
+    start_idx = 2 if position_column else 1
+    for col in df.columns[start_idx:]:
+        val = row.get(col)
+        if pd.isna(val):
+            val = 0
+
+        col_clean = str(col).strip()
+
+        # логіка визначення формату (можна залишити як була)
+        if col_clean in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС'] or '%' in col_clean or 'Доля' in col_clean or 'Конверсія' in col_clean:
+            value = round(float(val) * 100, 2) if pd.notna(val) else 0
+            unit = '%'
+        elif col_clean in ['Шт.', 'Чеки', 'ПЧ'] or 'шт' in col_clean.lower():
+            value = int(float(val)) if pd.notna(val) else 0
+            unit = 'шт'
+        elif col_clean in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС'] or 'грн' in col_clean.lower():
+            value = round(float(val), 2) if pd.notna(val) else 0
+            unit = 'грн'
+        else:
+            value = round(float(val), 2) if pd.notna(val) else 0
+            unit = ''
+
+        metrics[col_clean] = {'value': value, 'label': col_clean, 'unit': unit}
+
+    person = {
+        'id': len(sales_data) + 1,
+        'name': name,
+        'position': position,
+        'initials': initials,
+        'gradient': gradients[len(sales_data) % len(gradients)],
+        'metrics': metrics
+    }
+    sales_data.append(person)
         
         # Загальні показники магазину (суми/середні)
         store_totals = {

@@ -16,12 +16,15 @@ def fetch_and_convert():
     print(f"🔗 URL: {GOOGLE_SHEET_URL}")
     
     try:
-        # Читаємо CSV з Google Таблиці (рядок 3 - заголовки)
-        df = pd.read_csv(GOOGLE_SHEET_URL, header=2)
+        # Важливо: header=0, бо заголовки знаходяться в першому рядку
+        df = pd.read_csv(GOOGLE_SHEET_URL, header=0)
+        
+        # Друк колонок для перевірки (можна видалити після тестування)
+        print("Колонки в таблиці:", df.columns.tolist())
         
         print(f"✅ Завантажено {len(df)} рядків, {len(df.columns)} стовпців")
         
-        # Градієнти
+        # Градієнти для карток
         gradients = [
             'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -37,30 +40,31 @@ def fetch_and_convert():
         sales_data = []
         
         for idx, row in df.iterrows():
-            if pd.notna(row['ПК']):
-                name = str(row['ПК'])
+            # Перевіряємо, чи є значення в колонці 'ПК' і чи воно не порожнє
+            if pd.notna(row.get('ПК')) and str(row.get('ПК')).strip():
+                name = str(row['ПК']).strip()
                 
                 # Генеруємо ініціали
                 name_parts = name.split()
                 if len(name_parts) >= 2:
                     initials = ''.join([p[0] for p in name_parts[:2]]).upper()
                 else:
-                    initials = name[0].upper()
+                    initials = name[0].upper() if name else '?'
                 
                 # Створюємо метрики
                 metrics = {}
-                for col in df.columns[2:]:
-                    val = row[col]
+                for col in df.columns[2:]:  # починаємо з третьої колонки (після ПК і Посада)
+                    val = row.get(col)
                     
                     if pd.isna(val):
                         val = 0
                     
-                    # Визначаємо тип
+                    # Визначаємо тип даних і формат
                     if col in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
                         value = round(float(val) * 100, 2) if pd.notna(val) else 0
                         unit = '%'
                     elif col in ['Шт.', 'Чеки', 'ПЧ']:
-                        value = int(val) if pd.notna(val) else 0
+                        value = int(float(val)) if pd.notna(val) else 0
                         unit = 'шт'
                     elif col in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
                         value = round(float(val), 2) if pd.notna(val) else 0
@@ -78,7 +82,7 @@ def fetch_and_convert():
                 person = {
                     'id': len(sales_data) + 1,
                     'name': name,
-                    'position': str(row['Посада']) if pd.notna(row['Посада']) else 'Менеджер з продажу',
+                    'position': str(row.get('Посада', 'Менеджер з продажу')),
                     'initials': initials,
                     'gradient': gradients[len(sales_data) % len(gradients)],
                     'metrics': metrics
@@ -95,7 +99,7 @@ def fetch_and_convert():
             'metrics': {}
         }
 
-        # Підсумовуємо
+        # Підсумовуємо / середні значення
         for col in df.columns[2:]:
             if col in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
                 values = [p['metrics'][col]['value'] for p in sales_data if col in p['metrics']]
@@ -117,10 +121,10 @@ def fetch_and_convert():
                 avg_value = round(sum(values) / len(values), 2) if values else 0
                 store_totals['metrics'][col] = {'value': avg_value, 'label': col, 'unit': ''}
         
-        # Додаємо магазин на початок
+        # Додаємо загальні показники на початок
         all_data = [store_totals] + sales_data
         
-        # Зберігаємо
+        # Зберігаємо у файл
         with open('sales-data.json', 'w', encoding='utf-8') as f:
             json.dump(all_data, f, ensure_ascii=False, indent=2)
         

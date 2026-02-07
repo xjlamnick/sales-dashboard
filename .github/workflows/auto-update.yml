@@ -1,48 +1,76 @@
 name: Auto Update from Google Sheets
 
 on:
-  # Запускається кожні 15 хвилин
   schedule:
     - cron: '0 */3 * * *'
-  
-  # Можна запустити вручну
+
   workflow_dispatch:
-  
-  # Запускається при push (для тестування)
+
   push:
     branches: [ main ]
 
 jobs:
-  update-data:
+  update:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-        
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        
-    - name: Fetch data from Google Sheets
-      run: |
-        python fetch_google_sheet.py
-        
-    - name: Check for changes
-      id: check_changes
-      run: |
-        git diff --exit-code sales-data.json || echo "changed=true" >> $GITHUB_OUTPUT
-        
-    - name: Commit and push if changed
-      if: steps.check_changes.outputs.changed == 'true'
-      run: |
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add sales-data.json
-        git commit -m "🔄 Auto-update data from Google Sheets $(date '+%Y-%m-%d %H:%M:%S')"
-        git push
+      # Перевіряємо репозиторій з повною історією
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Налаштовуємо Git (обов'язково вказати ім'я та email)
+      - name: Configure Git
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      # Встановлюємо Python (якщо використовуєш Python-скрипт для Google Sheets)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Встановлюємо залежності (змінюй залежно від того, що використовуєш)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas
+
+      # Тут твій скрипт, який завантажує дані з Google Sheets
+      # Приклад: update_data.py — заміни на свій файл
+      - name: Update data from Google Sheets
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: python update_data.py
+
+      # Коміт і пуш тільки якщо є зміни
+      - name: Commit and push changes
+        run: |
+          git add .
+          
+          # Перевіряємо, чи є реальні зміни
+          git diff --staged --quiet
+          if [ $? -eq 0 ]; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "🔄 Auto-update data from Google Sheets $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          # Спробуємо спочатку простий push
+          git push origin HEAD:main || {
+            echo "Push failed → pulling and retrying"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          }
+
+      # (опціонально) можна додати кешування залежностей для прискорення
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-

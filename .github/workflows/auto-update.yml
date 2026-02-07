@@ -14,39 +14,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Перевіряємо репозиторій з повною історією
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Налаштовуємо Git (обов'язково вказати ім'я та email)
       - name: Configure Git
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-      # Встановлюємо Python (якщо використовуєш Python-скрипт для Google Sheets)
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Встановлюємо залежності (змінюй залежно від того, що використовуєш)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install gspread google-auth google-auth-oauthlib google-auth-httplib2 pandas
 
-      # Тут твій скрипт, який завантажує дані з Google Sheets
-      # Приклад: update_data.py — заміни на свій файл
       - name: Update data from Google Sheets
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: python update_data.py
+        run: |
+          echo "Current directory:"
+          pwd
+          
+          echo "Files in current directory:"
+          ls -la
+          
+          if [ -f "update_data.py" ]; then
+            echo "Found update_data.py → running..."
+            python update_data.py
+          else
+            echo "ERROR: update_data.py NOT FOUND"
+            echo "Please make sure the file exists in the repository root"
+            exit 1
+          fi
 
-      # Коміт і пуш тільки якщо є зміни
-      - name: Commit and push changes
+      - name: Commit and push changes if any
         run: |
           git add .
           
@@ -59,18 +66,10 @@ jobs:
           
           git commit -m "🔄 Auto-update data from Google Sheets $(date '+%Y-%m-%d %H:%M:%S UTC')"
           
-          # Спробуємо спочатку простий push
+          # Спроба push → якщо не вийде, pull + retry
           git push origin HEAD:main || {
-            echo "Push failed → pulling and retrying"
+            echo "Push rejected → pulling and retrying"
             git pull --rebase origin main
             git push origin HEAD:main
           }
-
-      # (опціонально) можна додати кешування залежностей для прискорення
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      

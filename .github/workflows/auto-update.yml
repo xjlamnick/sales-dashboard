@@ -1,1 +1,48 @@
+name: Auto Update from Google Sheets
 
+on:
+  # Запускається кожні 15 хвилин
+  schedule:
+    - cron: '*/15 * * * *'
+  
+  # Можна запустити вручну
+  workflow_dispatch:
+  
+  # Запускається при push (для тестування)
+  push:
+    branches: [ main ]
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        
+    - name: Fetch data from Google Sheets
+      run: |
+        python fetch_google_sheet.py
+        
+    - name: Check for changes
+      id: check_changes
+      run: |
+        git diff --exit-code sales-data.json || echo "changed=true" >> $GITHUB_OUTPUT
+        
+    - name: Commit and push if changed
+      if: steps.check_changes.outputs.changed == 'true'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add sales-data.json
+        git commit -m "🔄 Auto-update data from Google Sheets $(date '+%Y-%m-%d %H:%M:%S')"
+        git push

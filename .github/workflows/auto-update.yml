@@ -3,50 +3,72 @@ name: Auto Update from Google Sheets
 on:
   schedule:
     - cron: '0 */3 * * *'
+
   workflow_dispatch:
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     permissions:
-      contents: write          # важливо для push
+      contents: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0              # повна історія — важливо для rebase
+          persist-credentials: true   # зберігає токен для push
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Fetch data from Google Sheets
-      env:
-        GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        # інші секрети, якщо треба
-      run: python fetch_google_sheet.py
+      - name: Fetch data from Google Sheets
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: python fetch_google_sheet.py
 
-    - name: Check for changes and commit
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        
-        git add sales-data.json
-        
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-          exit 0
-        fi
-        
-        git commit -m "chore: auto update sales data from Google Sheets $(date +'%Y-%m-%d %H:%M')"
-        git push
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for changes, commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add sales-data.json
+
+          # Якщо немає змін — виходимо
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: auto update sales data from Google Sheets $(date '+%Y-%m-%d %H:%M UTC')"
+
+          echo "Trying to push..."
+
+          # Спробуємо push 3 рази з автоматичним rebase при конфліктах
+          for attempt in {1..3}; do
+            echo "Push attempt #$attempt"
+            if git push origin HEAD:main; then
+              echo "Successfully pushed"
+              exit 0
+            fi
+
+            echo "Push failed → trying to rebase"
+            git pull --rebase origin main || {
+              echo "Rebase failed"
+              exit 1
+            }
+
+            sleep 2
+          done
+
+          echo "Failed to push after 3 attempts"
+          exit 1

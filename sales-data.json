@@ -34,7 +34,7 @@
       "КПЧ": {
         "value": 1.52,
         "label": "КПЧ",
-        "unit": ""
+        "unit": "грн"
       },
       "ACC": {
         "value": 373639.9,
@@ -86,7 +86,7 @@
   {
     "id": 1,
     "name": "Бондаренко Володимир Володимирович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "БВ",
     "gradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     "metrics": {
@@ -170,7 +170,7 @@
   {
     "id": 2,
     "name": "Троя Андрій Васильович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "ТА",
     "gradient": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
     "metrics": {
@@ -254,7 +254,7 @@
   {
     "id": 3,
     "name": "Алтухов Олександр Сергійович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "АО",
     "gradient": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
     "metrics": {
@@ -338,7 +338,7 @@
   {
     "id": 4,
     "name": "Жданов Олександр Миколайович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "ЖО",
     "gradient": "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
     "metrics": {
@@ -422,7 +422,7 @@
   {
     "id": 5,
     "name": "Колодяжний Сергій Васильович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "КС",
     "gradient": "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
     "metrics": {
@@ -506,7 +506,7 @@
   {
     "id": 6,
     "name": "Сторожук Артем Олегович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "СА",
     "gradient": "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
     "metrics": {
@@ -590,7 +590,7 @@
   {
     "id": 7,
     "name": "Пінчук Поліна Вікторівна",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "ПП",
     "gradient": "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
     "metrics": {
@@ -674,7 +674,7 @@
   {
     "id": 8,
     "name": "Котенков Нікіта Олександрович",
-    "position": "продавец-консультант",
+    "position": "nan",
     "initials": "КН",
     "gradient": "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
     "metrics": {

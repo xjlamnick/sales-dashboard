@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Скрипт для автоматичного оновлення даних з Google Таблиці 
+Скрипт для автоматичного оновлення даних з Google Таблиці
 """
 
 import pandas as pd
@@ -19,10 +19,10 @@ def fetch_and_convert():
         # Читаємо таблицю — заголовки в першому рядку
         df = pd.read_csv(GOOGLE_SHEET_URL, header=0)
         
-        # Діагностика — покаже реальні назви колонок
+        # Діагностика
         print("Колонки в таблиці:", df.columns.tolist())
         
-        # Замінюємо кому на крапку та перетворюємо на числа всі колонки після перших двох
+        # Замінюємо кому на крапку та перетворюємо на числа
         for col in df.columns[2:]:
             df[col] = df[col].astype(str).str.replace(',', '.', regex=False)
             df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -45,38 +45,37 @@ def fetch_and_convert():
         sales_data = []
         
         for idx, row in df.iterrows():
-            # Перевіряємо, чи є ім'я і чи воно не порожнє
-            if pd.notna(row['ПК']) and str(row['ПК']).strip():
+            # Перевіряємо наявність імені
+            if pd.notna(row.get('ПК')) and str(row.get('ПК')).strip():
                 name = str(row['ПК']).strip()
                 
-                # Генеруємо ініціали
+                # Ініціали
                 name_parts = name.split()
-                initials = ''.join([p[0] for p in name_parts[:2]]).upper() if len(name_parts) >= 2 else name[0].upper() if name else '?'
+                initials = ''.join(p[0] for p in name_parts[:2]).upper() if len(name_parts) >= 2 else name[0].upper() if name else '?'
                 
-                # Посада — правильний регістр
-                position = str(row['ПОСАДА']) if pd.notna(row['ПОСАДА']) else 'Менеджер з продажу'
-                position = position.strip()
+                # Посада — правильна назва колонки
+                position = str(row.get('Посада', 'Менеджер з продажу')).strip()
                 
                 # Метрики
                 metrics = {}
                 for col in df.columns[2:]:
-                    val = row[col]
+                    val = row.get(col, 0)
                     if pd.isna(val):
                         val = 0
                     
                     col_name = col.strip()
                     
                     if col_name in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
-                        value = round(float(val) * 100, 2) if pd.notna(val) else 0
+                        value = round(val * 100, 2) if pd.notna(val) else 0
                         unit = '%'
                     elif col_name in ['Шт.', 'Чеки', 'ПЧ']:
                         value = int(val) if pd.notna(val) else 0
                         unit = 'шт'
                     elif col_name in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
-                        value = round(float(val), 2) if pd.notna(val) else 0
+                        value = round(val, 2) if pd.notna(val) else 0
                         unit = 'грн'
                     else:
-                        value = round(float(val), 2) if pd.notna(val) else 0
+                        value = round(val, 2) if pd.notna(val) else 0
                         unit = ''
                     
                     metrics[col_name] = {

@@ -17,7 +17,7 @@ def fetch_and_convert():
     
     try:
         # Читаємо CSV з Google Таблиці (рядок 3 - заголовки)
-        df = pd.read_csv(GOOGLE_SHEET_URL, header=2)
+        df = pd.read_csv(GOOGLE_SHEET_URL, header=0)
         
         print(f"✅ Завантажено {len(df)} рядків, {len(df.columns)} стовпців")
         

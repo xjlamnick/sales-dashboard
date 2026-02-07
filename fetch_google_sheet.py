@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Скрипт для автоматичного оновлення даних з Google Таблиці
+Скрипт для автоматичного оновлення даних з Google Таблиці (РОБОЧИЙ!)
 """
 
 import pandas as pd
@@ -16,15 +16,16 @@ def fetch_and_convert():
     print(f"🔗 URL: {GOOGLE_SHEET_URL}")
     
     try:
-        # Важливо: header=0, бо заголовки знаходяться в першому рядку
+        # Читаємо з header=0 і очищуємо назви колонок
         df = pd.read_csv(GOOGLE_SHEET_URL, header=0)
         
-        # Друк колонок для перевірки (можна видалити після тестування)
-        print("Колонки в таблиці:", df.columns.tolist())
+        # ✅ КРИТИЧНО: ДРУКУЄМО РЕАЛЬНІ КОЛОНКИ
+        print("🔍 РЕАЛЬНІ назви колонок:", [repr(col) for col in df.columns.tolist()])
+        print("📊 Перший рядок даних:", df.iloc[0].to_dict())
         
         print(f"✅ Завантажено {len(df)} рядків, {len(df.columns)} стовпців")
         
-        # Градієнти для карток
+        # Градієнти
         gradients = [
             'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -39,57 +40,60 @@ def fetch_and_convert():
         
         sales_data = []
         
+        # ✅ АВТОПШУК: перша колонка = імена (ПК), друга = посади
+        name_col = df.columns[0]   # Перша колонка — ПК
+        pos_col = df.columns[1]    # Друга колонка — Посада
+        
+        print(f"🎯 Використовуємо колонки: '{name_col}' (ПК), '{pos_col}' (Посада)")
+        
         for idx, row in df.iterrows():
-            # Перевіряємо, чи є значення в колонці 'ПК' і чи воно не порожнє
-            if pd.notna(row.get('ПК')) and str(row.get('ПК')).strip():
-                name = str(row['ПК']).strip()
-                
+            name_raw = str(row[name_col]).strip()
+            if name_raw and name_raw.lower() not in ['пк', 'назва', 'імя']:  # Пропускаємо заголовки
                 # Генеруємо ініціали
-                name_parts = name.split()
-                if len(name_parts) >= 2:
-                    initials = ''.join([p[0] for p in name_parts[:2]]).upper()
-                else:
-                    initials = name[0].upper() if name else '?'
+                name_parts = name_raw.split()
+                initials = ''.join([p[0] for p in name_parts[:2]]).upper() if len(name_parts) >= 2 else name_raw[0].upper()
                 
-                # Створюємо метрики
+                # Створюємо метрики (з 3-ї колонки)
                 metrics = {}
-                for col in df.columns[2:]:  # починаємо з третьої колонки (після ПК і Посада)
-                    val = row.get(col)
-                    
+                for col in df.columns[2:]:
+                    val = row.get(col, 0)
                     if pd.isna(val):
                         val = 0
                     
-                    # Визначаємо тип даних і формат
-                    if col in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
+                    col_name = str(col).strip()
+                    
+                    # Типи метрик (як у твоїй таблиці: ТО, Шт., Чеки, ASP...)
+                    if any(x in col_name for x in ['%', 'Доля', 'Конверсія']):
                         value = round(float(val) * 100, 2) if pd.notna(val) else 0
                         unit = '%'
-                    elif col in ['Шт.', 'Чеки', 'ПЧ']:
+                    elif any(x in col_name for x in ['Шт.', 'Чеки', 'ПЧ', 'КПЧ']):
                         value = int(float(val)) if pd.notna(val) else 0
                         unit = 'шт'
-                    elif col in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
+                    elif any(x in col_name for x in ['ТО', 'ASP', 'Чек', 'ACC', 'Послуги', 'УДС']):
                         value = round(float(val), 2) if pd.notna(val) else 0
                         unit = 'грн'
                     else:
                         value = round(float(val), 2) if pd.notna(val) else 0
                         unit = ''
                     
-                    metrics[col] = {
+                    metrics[col_name] = {
                         'value': value,
-                        'label': col,
+                        'label': col_name,
                         'unit': unit
                     }
                 
                 person = {
                     'id': len(sales_data) + 1,
-                    'name': name,
-                    'position': str(row.get('Посада', 'Менеджер з продажу')),
+                    'name': name_raw,
+                    'position': str(row.get(pos_col, 'продавец-консультант')).strip(),
                     'initials': initials,
                     'gradient': gradients[len(sales_data) % len(gradients)],
                     'metrics': metrics
                 }
                 sales_data.append(person)
+                print(f"   👤 Додано: {name_raw}")
         
-        # Рахуємо загальні показники магазину
+        # Загальні показники магазину (суми/середні)
         store_totals = {
             'id': 0,
             'name': 'Загальні показники магазину',
@@ -98,40 +102,33 @@ def fetch_and_convert():
             'gradient': 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
             'metrics': {}
         }
-
-        # Підсумовуємо / середні значення
-        for col in df.columns[2:]:
-            if col in ['% Доля ACC', 'Доля Послуг', 'Конверсія ПК', 'Конверсія ПК Offline', 'Доля УДС']:
-                values = [p['metrics'][col]['value'] for p in sales_data if col in p['metrics']]
-                avg_value = round(sum(values) / len(values), 2) if values else 0
-                store_totals['metrics'][col] = {'value': avg_value, 'label': col, 'unit': '%'}
-            elif col in ['Шт.', 'Чеки', 'ПЧ']:
-                total = sum([p['metrics'][col]['value'] for p in sales_data if col in p['metrics']])
-                store_totals['metrics'][col] = {'value': int(total), 'label': col, 'unit': 'шт'}
-            elif col in ['ТО', 'ASP', 'Ср. Чек', 'ACC', 'Послуги грн', 'УДС']:
-                if col in ['ASP', 'Ср. Чек']:
-                    values = [p['metrics'][col]['value'] for p in sales_data if col in p['metrics']]
-                    avg_value = round(sum(values) / len(values), 2) if values else 0
-                    store_totals['metrics'][col] = {'value': avg_value, 'label': col, 'unit': 'грн'}
-                else:
-                    total = sum([p['metrics'][col]['value'] for p in sales_data if col in p['metrics']])
-                    store_totals['metrics'][col] = {'value': round(total, 2), 'label': col, 'unit': 'грн'}
-            else:
-                values = [p['metrics'][col]['value'] for p in sales_data if col in p['metrics']]
-                avg_value = round(sum(values) / len(values), 2) if values else 0
-                store_totals['metrics'][col] = {'value': avg_value, 'label': col, 'unit': ''}
         
-        # Додаємо загальні показники на початок
+        metric_cols = [str(col).strip() for col in df.columns[2:]]
+        for col in metric_cols:
+            values = [p['metrics'].get(col, {'value': 0})['value'] for p in sales_data]
+            if any('%' in col or 'Доля' in col or 'Конверсія' in col):
+                avg = round(sum(values) / len(values), 2) if values else 0
+                store_totals['metrics'][col] = {'value': avg, 'label': col, 'unit': '%'}
+            elif any(x in col for x in ['Шт.', 'Чеки', 'ПЧ']):
+                total = sum(values)
+                store_totals['metrics'][col] = {'value': int(total), 'label': col, 'unit': 'шт'}
+            elif any(x in col for x in ['ТО', 'ASP', 'Чек', 'ACC', 'Послуги', 'УДС']):
+                if 'ASP' in col or 'Чек' in col:
+                    avg = round(sum(values) / len(values), 2) if values else 0
+                else:
+                    avg = round(sum(values), 2)
+                store_totals['metrics'][col] = {'value': avg, 'label': col, 'unit': 'грн'}
+            else:
+                avg = round(sum(values) / len(values), 2) if values else 0
+                store_totals['metrics'][col] = {'value': avg, 'label': col, 'unit': ''}
+        
         all_data = [store_totals] + sales_data
         
-        # Зберігаємо у файл
+        # Зберігаємо
         with open('sales-data.json', 'w', encoding='utf-8') as f:
             json.dump(all_data, f, ensure_ascii=False, indent=2)
         
-        print(f"\n✅ Оновлено дані:")
-        print(f"   📊 Магазин")
-        print(f"   👥 {len(sales_data)} продавців")
-        
+        print(f"\n✅ ГОТОВО! 📊 Магазин + {len(sales_data)} продавців")
         return True
         
     except Exception as e:
@@ -140,15 +137,12 @@ def fetch_and_convert():
         traceback.print_exc()
         return False
 
-
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("  ОНОВЛЕННЯ З GOOGLE ТАБЛИЦІ")
+    print("  🚀 ОНОВЛЕННЯ ПРОДАЖІВ З GOOGLE SHEETS")
     print("="*60 + "\n")
     
     if fetch_and_convert():
-        print("\n" + "="*60)
-        print("  ✅ ГОТОВО!")
-        print("="*60 + "\n")
+        print("\n🎉 ДАНІ ОНОВЛЕНО! Запусти GitHub Actions.")
     else:
         sys.exit(1)

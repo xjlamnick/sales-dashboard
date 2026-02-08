@@ -25,7 +25,7 @@ import traceback
 # ============================================
 
 # Твій CSV URL (публічний, export=csv)
-BASE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxPqHp5lwwhjdDTaJdiwWYbhqZmeALG5dVhSZ6rHx2W8KGrcNWaa5-7qiVB87KKbQEXjtF1WVwmBzp/pub?output=csv"
+BASE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRxPqHp5lwwhjdDTaJdiwWYbhqZmeALG5dVhSZ6rHx2W8KGrcNWaa5-7qiVB87KKbQEXjtF1WVwmBzp/pub?gid=50416606&single=true&output=csv"
 
 # Якщо в таблиці кілька аркушів у вигляді CSV + формули → там може бути лише один CSV
 # Тож тут ми читаємо весь CSV як один

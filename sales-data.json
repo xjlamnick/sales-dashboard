@@ -7,7 +7,7 @@
     "gradient": "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
     "metrics": {
       "ТО": {
-        "value": 4221418.0,
+        "value": 5077195.0,
         "label": "ТО",
         "unit": "грн"
       },
@@ -91,7 +91,7 @@
     "gradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     "metrics": {
       "ТО": {
-        "value": 1144223.0,
+        "value": 2000000.0,
         "label": "ТО",
         "unit": "грн"
       },

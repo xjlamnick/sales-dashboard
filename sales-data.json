@@ -25,7 +25,7 @@
         "unit": "шт"
       },
       "ASP": {
-        "value": 59145.75,
+        "value": 73881.0,
         "unit": "грн"
       },
       "Ср. Чек": {
@@ -557,7 +557,7 @@
         "unit": "шт"
       },
       "ASP": {
-        "value": 5.99,
+        "value": 5990.0,
         "unit": "грн"
       },
       "Ср. Чек": {
@@ -633,7 +633,7 @@
         "unit": "шт"
       },
       "ASP": {
-        "value": 5.76,
+        "value": 5760.0,
         "unit": "грн"
       },
       "Ср. Чек": {
@@ -785,7 +785,7 @@
         "unit": "шт"
       },
       "ASP": {
-        "value": 3.0,
+        "value": 3000.0,
         "unit": "грн"
       },
       "Ср. Чек": {
@@ -835,9 +835,9 @@
     }
   },
   {
-    "name": "nan",
-    "position": "nan",
-    "initials": "NA",
+    "name": "пк",
+    "position": "пк",
+    "initials": "ПК",
     "gradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     "metrics": {
       "ПК": {

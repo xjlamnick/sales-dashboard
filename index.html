@@ -1,575 +1,741 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Команда продажів</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор кластеру ТО</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700&family=Geologica:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0d0f14; --surface:#141820; --surface2:#1a2030; --border:#252d3d;
+  --accent:#3b82f6; --accent2:#10b981; --accent3:#f59e0b; --accent4:#ef4444;
+  --text:#e8edf5; --text2:#8899b4; --text3:#4a5a73;
+  --q1:rgba(59,130,246,.06); --q2:rgba(16,185,129,.06); --q3:rgba(245,158,11,.06); --q4:rgba(239,68,68,.06);
+  --q1b:rgba(59,130,246,.22); --q2b:rgba(16,185,129,.22); --q3b:rgba(245,158,11,.22); --q4b:rgba(239,68,68,.22);
+}
+html.light {
+  --bg:#f0f4fa; --surface:#ffffff; --surface2:#e8eef8; --border:#d0daea;
+  --accent:#2563eb; --accent2:#059669; --accent3:#d97706; --accent4:#dc2626;
+  --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+  --q1:rgba(59,130,246,.07); --q2:rgba(16,185,129,.07); --q3:rgba(245,158,11,.07); --q4:rgba(239,68,68,.07);
+  --q1b:rgba(59,130,246,.18); --q2b:rgba(16,185,129,.18); --q3b:rgba(245,158,11,.18); --q4b:rgba(239,68,68,.18);
+}
+html.light body::before{background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px)}
+html.light .cg select option{background:#fff;color:#0f172a}
+html.light .cluster-ref-select{background:#e8eef8;color:#0f172a}
+html.light tbody tr:hover{background:rgba(59,130,246,.05)}
+html.light .ic2 input{background:#e8eef8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Geologica',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.container{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:28px 20px}
 
-        :root {
-            --color-bg: #fbfbfd;
-            --color-text: #1d1d1f;
-            --color-text-secondary: #6e6e73;
-            --color-card-bg: #ffffff;
-            --color-accent: #0071e3;
-            --color-border: #d2d2d7;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-            
-            /* Кольори для метрик */
-            --color-revenue: #0071e3;
-            --color-services: #34c759;
-            --color-acc: #ff9500;
-            --color-checks: #af52de;
-            --color-conversion: #ff2d55;
-            --color-uds: #5856d6;
-        }
+/* HEADER */
+header{margin-bottom:28px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.header-title h1{font-family:'Unbounded',sans-serif;font-size:clamp(15px,2.5vw,24px);font-weight:700;letter-spacing:-.02em}
+.header-title h1 span{color:var(--accent)}
+.header-title p{font-size:11px;color:var(--text2);margin-top:5px;font-weight:300}
+.btn-reset{background:transparent;border:1px solid var(--border);color:var(--text2);font-family:'Unbounded',sans-serif;font-size:10px;padding:8px 16px;border-radius:8px;cursor:pointer;letter-spacing:.05em;transition:all .2s}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent)}
+.btn-theme{background:transparent;border:1px solid var(--border);color:var(--text2);font-size:16px;width:36px;height:36px;border-radius:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.btn-theme:hover{border-color:var(--accent);color:var(--accent)}
+.header-actions{display:flex;gap:8px;align-items:center}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--color-bg);
-            color: var(--color-text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
+/* CONTROLS */
+.controls{display:grid;grid-template-columns:2fr 1fr 2fr;gap:12px;margin-bottom:20px}
+@media(max-width:640px){.controls{grid-template-columns:1fr}}
+.cg{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;transition:border-color .2s}
+.cg:focus-within{border-color:var(--accent)}
+.cg label{display:block;font-size:9.5px;font-family:'Unbounded',sans-serif;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.cg select,.cg input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none}
+.cg select option{background:#1a2030;color:var(--text)}
 
-        header {
-            background: rgba(251, 251, 253, 0.95);
-            backdrop-filter: blur(20px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid var(--color-border);
-        }
+/* CLUSTER INFO */
+.cluster-info{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:640px){.cluster-info{grid-template-columns:repeat(2,1fr)}}
+.ic{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;position:relative;overflow:hidden}
+.ic::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+.ic .lbl{font-size:9px;font-family:'Unbounded',sans-serif;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.ic .val{font-size:16px;font-family:'Unbounded',sans-serif;font-weight:700;color:var(--accent)}
+.ic .sub{font-size:10.5px;color:var(--text2);margin-top:3px}
 
-        nav {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+/* CLUSTER REFERENCE */
+.cluster-ref{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.cluster-ref h3{font-size:9.5px;font-family:'Unbounded',sans-serif;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:11px}
+.cluster-ref-grid{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}
+.cluster-ref-grid::-webkit-scrollbar{height:3px}
+.cluster-ref-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.cp{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;min-width:100px;flex-shrink:0}
+.cp.ac{border-color:var(--accent);background:rgba(59,130,246,.1)}
+.cp.nc{border-color:var(--accent2);background:rgba(16,185,129,.1)}
+.cp .cpn{font-family:'Unbounded',sans-serif;font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.cp .cpr{font-size:10px;font-weight:500;color:var(--text)}
+.cp .cpk{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;color:var(--accent3)}
+/* Mobile dropdown */
+.cluster-ref-select{display:none;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Geologica',sans-serif;font-size:13px;outline:none;appearance:none;-webkit-appearance:none}
+@media(max-width:768px){.cluster-ref-grid{display:none}.cluster-ref-select{display:block}}
 
-        .logo {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--color-text);
-        }
+/* TABLE */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px}
+.th{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.th h2{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;color:var(--text);letter-spacing:.02em}
+.legend{display:flex;gap:12px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2)}
+.ld{width:7px;height:7px;border-radius:50%}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:9px 11px;text-align:right;font-family:'Unbounded',sans-serif;font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap}
+thead th:first-child,thead th:nth-child(2),thead th:nth-child(3){text-align:left}
+tbody tr{border-bottom:1px solid rgba(37,45,61,.4);transition:background .12s}
+tbody tr:hover{background:rgba(59,130,246,.03)}
+tbody tr:last-child{border-bottom:none}
+td{padding:8px 11px;text-align:right;color:var(--text);white-space:nowrap}
+td:first-child,td:nth-child(2),td:nth-child(3){text-align:left}
+.ql{font-family:'Unbounded',sans-serif;font-size:8.5px;font-weight:600;letter-spacing:.05em;padding:3px 8px;border-radius:5px;display:inline-block}
+.q1-label{background:var(--q1b);color:#1d4ed8}
+.q2-label{background:var(--q2b);color:#047857}
+.q3-label{background:var(--q3b);color:#b45309}
+.q4-label{background:var(--q4b);color:#b91c1c}
+html:not(.light) .q1-label{color:#93c5fd}
+html:not(.light) .q2-label{color:#6ee7b7}
+html:not(.light) .q3-label{color:#fcd34d}
+html:not(.light) .q4-label{color:#fca5a5}
+.q1-row{background:var(--q1)}
+.q2-row{background:var(--q2)}
+.q3-row{background:var(--q3)}
+.q4-row{background:var(--q4)}
+.mc{color:var(--text2);font-size:11.5px}
+.kc{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;color:var(--text2)}
+/* Input */
+.ic2 input{width:128px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--text);font-family:'Geologica',sans-serif;font-size:12px;text-align:right;outline:none;transition:border-color .2s,box-shadow .2s}
+.ic2 input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.ic2 input::placeholder{color:var(--text3)}
+.cc{font-weight:500;color:var(--text)}
+.cc.m{font-family:'Unbounded',sans-serif;font-size:11.5px;font-weight:700;color:var(--accent3)}
+.zc{font-family:'Unbounded',sans-serif;font-size:11.5px;font-weight:700}
+.zc.ok{color:#34d399}
+.zc.em{color:var(--text3)}
+.zck{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700}
+.zck.ok{color:var(--accent3)}
 
-        .back-btn {
-            color: var(--color-accent);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            display: none;
-        }
+/* CHART */
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:20px}
+.cw h2{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:600;color:var(--text);letter-spacing:.02em;margin-bottom:16px}
+.cc2{position:relative;height:250px}
 
-        .hero {
-            max-width: 1400px;
-            margin: 40px auto 30px;
-            padding: 0 20px;
-            text-align: center;
-        }
+/* SUMMARY */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.sc.blue{border-top:2px solid var(--accent)}
+.sc.green{border-top:2px solid var(--accent2)}
+.sc.yellow{border-top:2px solid var(--accent3)}
+.sc.red{border-top:2px solid var(--accent4)}
+.sc .sl{font-size:9px;font-family:'Unbounded',sans-serif;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.sc .sv{font-size:21px;font-family:'Unbounded',sans-serif;font-weight:700;margin-bottom:4px}
+.sc.blue .sv{color:var(--accent)}
+.sc.green .sv{color:var(--accent2)}
+.sc.yellow .sv{color:var(--accent3)}
+.sc.red .sv{color:var(--accent4)}
+.sc .ss{font-size:10.5px;color:var(--text2);line-height:1.5}
 
-        .hero h1 {
-            font-size: clamp(32px, 8vw, 56px);
-            font-weight: 700;
-            letter-spacing: -1px;
-            margin-bottom: 12px;
-        }
+@media(max-width:768px){.ic2 input{width:95px;font-size:11px}table{font-size:11px}td,th{padding:6px 7px}.cc2{height:190px}}
 
-        .hero p {
-            font-size: clamp(16px, 4vw, 22px);
-            color: var(--color-text-secondary);
-            font-weight: 300;
-        }
+/* MOBILE TABLE CARDS */
+@media(max-width:640px){
+  .table-desktop{display:none}
+  .table-mobile{display:flex;flex-direction:column;gap:10px;padding:12px}
 
-        .team-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px 20px 60px;
-        }
+  /* Quarter block — card */
+  .mob-quarter-block{border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+  .mob-quarter{font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;padding:9px 14px;display:flex;align-items:center;gap:8px}
+  .mob-ql{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:5px;display:inline-block}
 
-        .store-card-wrapper {
-            margin-bottom: 40px;
-        }
+  /* Month rows inside quarter */
+  .mob-row{padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;border-top:1px solid rgba(37,45,61,.35)}
+  html.light .mob-row{border-top-color:rgba(208,218,234,.6)}
 
-        .section-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding: 0 0 10px 0;
-            border-bottom: 2px solid var(--color-border);
-        }
+  .mob-month{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+  .mob-month-name{font-size:12.5px;font-weight:600;color:var(--text);font-family:'Unbounded',sans-serif;font-stretch:normal;line-height:1.3}
+  .mob-ksez{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;color:var(--text2);line-height:1.3}
 
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
+  .mob-cell{display:flex;flex-direction:column;gap:3px}
+  .mob-cell .mob-lbl{font-size:8px;font-family:'Unbounded',sans-serif;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;line-height:1.2;font-stretch:normal}
+  .mob-cell .mob-val{font-size:12px;font-weight:500;color:var(--text);line-height:1.3;font-stretch:normal}
+  .mob-cell .mob-val.accent{color:var(--accent);font-weight:700;font-family:'Unbounded',sans-serif;font-stretch:normal;line-height:1.3}
+  .mob-cell .mob-val.muted{color:var(--accent3);font-weight:700;font-family:'Unbounded',sans-serif;font-stretch:normal;line-height:1.3}
 
-        .team-card {
-            background: var(--color-card-bg);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
+  .mob-fact-wrap{grid-column:1/-1}
+  .mob-fact-wrap .mob-lbl{margin-bottom:5px}
+  .mob-fact-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Geologica',sans-serif;font-size:14px;text-align:right;outline:none;transition:border-color .2s,box-shadow .2s}
+  .mob-fact-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
 
-        .team-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .team-card.store-card {
-            border: 2px solid #FFD700;
-        }
-
-        .card-image {
-            width: 100%;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 56px;
-            color: white;
-            font-weight: 600;
-        }
-
-        .card-content {
-            padding: 20px;
-        }
-
-        .card-content h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .card-content p {
-            font-size: 14px;
-            color: var(--color-text-secondary);
-            margin-bottom: 16px;
-        }
-
-        .card-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .stat {
-            text-align: center;
-            padding: 12px;
-            background: #f5f5f7;
-            border-radius: 8px;
-        }
-
-        .stat-value {
-            font-size: 16px;
-            font-weight: 600;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            margin-top: 4px;
-        }
-
-        /* Кольори для різних метрик */
-        .stat[data-metric="ТО"] .stat-value { color: var(--color-revenue); }
-        .stat[data-metric="Послуги грн"] .stat-value { color: var(--color-services); }
-        .stat[data-metric="Доля Послуг"] .stat-value { color: var(--color-services); }
-        .stat[data-metric="% Доля ACC"] .stat-value { color: var(--color-acc); }
-        .stat[data-metric="ПЧ"] .stat-value { color: var(--color-checks); }
-
-        .detail-page {
-            display: none;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .detail-page.active {
-            display: block;
-        }
-
-        .detail-image {
-            width: 100%;
-            max-width: 300px;
-            height: 300px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 80px;
-            color: white;
-            font-weight: 600;
-            margin: 0 auto 30px;
-            box-shadow: var(--shadow-md);
-        }
-
-        .detail-info h1 {
-            font-size: clamp(24px, 6vw, 42px);
-            font-weight: 700;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        .detail-info .position {
-            font-size: 16px;
-            color: var(--color-text-secondary);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-
-        .metric-card {
-            background: var(--color-card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-sm);
-            text-align: center;
-            border-left: 4px solid var(--color-accent);
-        }
-
-        .metric-card[data-metric="ТО"] { border-left-color: var(--color-revenue); }
-        .metric-card[data-metric="Послуги грн"] { border-left-color: var(--color-services); }
-        .metric-card[data-metric="Доля Послуг"] { border-left-color: var(--color-services); }
-        .metric-card[data-metric="% Доля ACC"] { border-left-color: var(--color-acc); }
-        .metric-card[data-metric="ПЧ"] { border-left-color: var(--color-checks); }
-        .metric-card[data-metric="Конверсія ПК"] { border-left-color: var(--color-conversion); }
-        .metric-card[data-metric="Доля УДС"] { border-left-color: var(--color-uds); }
-
-        .metric-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .metric-card[data-metric="ТО"] .metric-value { color: var(--color-revenue); }
-        .metric-card[data-metric="Послуги грн"] .metric-value { color: var(--color-services); }
-        .metric-card[data-metric="Доля Послуг"] .metric-value { color: var(--color-services); }
-        .metric-card[data-metric="% Доля ACC"] .metric-value { color: var(--color-acc); }
-        .metric-card[data-metric="ПЧ"] .metric-value { color: var(--color-checks); }
-        .metric-card[data-metric="Конверсія ПК"] .metric-value { color: var(--color-conversion); }
-        .metric-card[data-metric="Доля УДС"] .metric-value { color: var(--color-uds); }
-
-        .metric-label {
-            font-size: 12px;
-            color: var(--color-text-secondary);
-            font-weight: 500;
-        }
-
-        .detailed-section-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .detailed-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-        }
-
-        .detailed-metric {
-            background: var(--color-card-bg);
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-sm);
-            border-left: 4px solid #d2d2d7;
-        }
-
-        .detailed-metric h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--color-text-secondary);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .detailed-metric-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--color-text);
-            margin-bottom: 4px;
-        }
-
-        .detailed-metric-unit {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            font-size: 18px;
-            color: var(--color-text-secondary);
-        }
-
-        @media (max-width: 768px) {
-            .team-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .detailed-metrics {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  /* Залік острівець */
+  .mob-zalik{grid-column:1/-1;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:9px;overflow:hidden;border:1px solid var(--border)}
+  .mob-zalik-cell{padding:9px 12px;display:flex;flex-direction:column;gap:3px;background:var(--surface2)}
+  .mob-zalik-cell:first-child{border-right:1px solid var(--border)}
+  .mob-zalik-cell .mob-lbl{font-size:8px;font-family:'Unbounded',sans-serif;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;line-height:1.2}
+  .mob-zto{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#34d399;line-height:1.3;font-stretch:normal}
+  .mob-zto.em{color:var(--text3)}
+  .mob-zck{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:var(--accent3);line-height:1.3;font-stretch:normal}
+}
+@media(min-width:641px){
+  .table-desktop{display:block}
+  .table-mobile{display:none}
+}
+</style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">SalesTeam</div>
-            <a href="#" class="back-btn" id="backBtn" onclick="showHome(); return false;">← Назад</a>
-        </nav>
-    </header>
+<div class="container">
 
-    <div id="home-page">
-        <section class="hero">
-            <h1>Наша команда</h1>
-            <p>Професіонали, які досягають результатів</p>
-        </section>
+<header>
+  <div class="header-title">
+    <h1>Калькулятор <span>Кластеру ТО</span></h1>
+    <p>Розрахунок плану підняття, підтвердження та заліку ТО і К обігу</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-theme" id="themeBtn" onclick="toggleTheme()" title="Змінити тему">🌙</button>
+    <button class="btn-reset" onclick="resetAll()">↺ Скинути</button>
+  </div>
+</header>
 
-        <div class="team-container">
-            <div class="store-card-wrapper">
-                <h2 class="section-title">📊 Загальні показники</h2>
-                <div id="storeCard"></div>
-            </div>
+<div class="controls">
+  <div class="cg"><label>🏙 Місто</label><select id="citySelect" onchange="onCityChange()"></select></div>
+  <div class="cg"><label>📍 К тер</label><input type="number" id="kTer" value="1.05" step="0.01" min="0.5" max="2" onchange="calculate()"></div>
+  <div class="cg">
+    <label>📊 Поточний кластер</label>
+    <select id="clusterSelect" onchange="onClusterChange()">
+      <option value="0">Кластер 0 (≥ 40 млн)</option>
+      <option value="1" selected>Кластер 1 (27–40 млн)</option>
+      <option value="2">Кластер 2 (22–27 млн)</option>
+      <option value="3">Кластер 3 (16–22 млн)</option>
+      <option value="4">Кластер 4 (12–16 млн)</option>
+      <option value="5">Кластер 5 (9.5–12 млн)</option>
+      <option value="6">Кластер 6 (6.5–9.5 млн)</option>
+      <option value="7">Кластер 7 (5–6.5 млн)</option>
+      <option value="8">Кластер 8 (0–5 млн)</option>
+    </select>
+  </div>
+</div>
 
-            <h2 class="section-title">👥 Команда продавців</h2>
-            <div class="team-grid" id="teamGrid">
-                <div class="loading">Завантаження...</div>
-            </div>
-        </div>
+<div class="cluster-info" id="clusterInfo"></div>
+
+<div class="cluster-ref">
+  <h3>Довідник кластерів — <span style="color:var(--accent)">◀ активний</span> &nbsp; <span style="color:var(--accent2)">↑ ціль</span></h3>
+  <div class="cluster-ref-grid" id="clusterRefGrid"></div>
+  <select class="cluster-ref-select" id="clusterRefSelect"></select>
+</div>
+
+<div class="tw">
+  <div class="th">
+    <h2>Розрахунок по місяцях</h2>
+    <div class="legend">
+      <div class="li"><div class="ld" style="background:#3b82f6"></div>1 кв.</div>
+      <div class="li"><div class="ld" style="background:#10b981"></div>2 кв.</div>
+      <div class="li"><div class="ld" style="background:#f59e0b"></div>3 кв.</div>
+      <div class="li"><div class="ld" style="background:#ef4444"></div>4 кв.</div>
     </div>
+  </div>
+  <div class="table-desktop" style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left">Квартал</th>
+          <th style="text-align:left">Місяць</th>
+          <th style="text-align:left">К сез</th>
+          <th>Факт. ТО</th>
+          <th>План підняття</th>
+          <th>План підтвердж.</th>
+          <th>Залік ТО</th>
+          <th>Залік К обігу</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+  <div class="table-mobile" id="tableMobile"></div>
+</div>
 
-    <div id="detail-page" class="detail-page"></div>
+<div class="cw">
+  <h2>📈 Виконання ТО vs Plan</h2>
+  <div class="cc2"><canvas id="toChart"></canvas></div>
+</div>
 
-    <script>
-        let salesTeam = [];
-        const EMBEDDED_DATA = [{"id":0,"name":"Загальні показники магазину","position":"Всі продавці","initials":"МАГ","gradient":"linear-gradient(135deg, #FFD700 0%, #FFA500 100%)","metrics":{"ТО":{"value":2510143.8,"label":"ТО","unit":"грн"},"Шт.":{"value":465,"label":"Шт.","unit":"шт"},"Чеки":{"value":298,"label":"Чеки","unit":"шт"},"ASP":{"value":5330.6,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8043.76,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.55,"label":"КПЧ","unit":""},"ACC":{"value":332976.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.47,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":77019.3,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":2.43,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":19,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":18.61,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":14.32,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":617267.1,"label":"УДС","unit":"грн"},"Доля УДС":{"value":19.94,"label":"Доля УДС","unit":"%"}}},{"id":1,"name":"Бондаренко Володимир Володимирович","position":"продавец-консультант","initials":"БВ","gradient":"linear-gradient(135deg, #667eea 0%, #764ba2 100%)","metrics":{"ТО":{"value":811213.3,"label":"ТО","unit":"грн"},"Шт.":{"value":117,"label":"Шт.","unit":"шт"},"Чеки":{"value":66,"label":"Чеки","unit":"шт"},"ASP":{"value":6933.45,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":12291.11,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.77,"label":"КПЧ","unit":""},"ACC":{"value":134348.0,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":16.56,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":34074.3,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":4.2,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":5,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":32.98,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":23.23,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":284810.0,"label":"УДС","unit":"грн"},"Доля УДС":{"value":35.11,"label":"Доля УДС","unit":"%"}}},{"id":2,"name":"Жданов Олександр Миколайович","position":"продавец-консультант","initials":"ЖО","gradient":"linear-gradient(135deg, #f093fb 0%, #f5576c 100%)","metrics":{"ТО":{"value":394810.4,"label":"ТО","unit":"грн"},"Шт.":{"value":64,"label":"Шт.","unit":"шт"},"Чеки":{"value":47,"label":"Чеки","unit":"шт"},"ASP":{"value":6168.91,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8400.22,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.36,"label":"КПЧ","unit":""},"ACC":{"value":25984.3,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":6.58,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":19438.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":4.92,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":5,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":23.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":18.59,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":76758.6,"label":"УДС","unit":"грн"},"Доля УДС":{"value":19.44,"label":"Доля УДС","unit":"%"}}},{"id":3,"name":"Алтухов Олександр Сергійович","position":"продавец-консультант","initials":"АО","gradient":"linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)","metrics":{"ТО":{"value":320118.0,"label":"ТО","unit":"грн"},"Шт.":{"value":59,"label":"Шт.","unit":"шт"},"Чеки":{"value":40,"label":"Чеки","unit":"шт"},"ASP":{"value":5425.73,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":8002.95,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.48,"label":"КПЧ","unit":""},"ACC":{"value":41667.2,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":13.02,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":2097.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.66,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":1,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":19.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":17.09,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":92772.2,"label":"УДС","unit":"грн"},"Доля УДС":{"value":28.98,"label":"Доля УДС","unit":"%"}}},{"id":4,"name":"Сторожук Артем Олегович","position":"продавец-консультант","initials":"СА","gradient":"linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)","metrics":{"ТО":{"value":267172.3,"label":"ТО","unit":"грн"},"Шт.":{"value":30,"label":"Шт.","unit":"шт"},"Чеки":{"value":21,"label":"Чеки","unit":"шт"},"ASP":{"value":8905.74,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":12722.49,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.43,"label":"КПЧ","unit":""},"ACC":{"value":7967.8,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":2.98,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":0.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.0,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":0,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":10.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":7.04,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":28499.9,"label":"УДС","unit":"грн"},"Доля УДС":{"value":10.67,"label":"Доля УДС","unit":"%"}}},{"id":5,"name":"Колодяжний Сергій Васильович","position":"продавец-консультант","initials":"КС","gradient":"linear-gradient(135deg, #fa709a 0%, #fee140 100%)","metrics":{"ТО":{"value":251409.1,"label":"ТО","unit":"грн"},"Шт.":{"value":73,"label":"Шт.","unit":"шт"},"Чеки":{"value":46,"label":"Чеки","unit":"шт"},"ASP":{"value":3443.96,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":5465.42,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.59,"label":"КПЧ","unit":""},"ACC":{"value":36092.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.36,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":12672.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":5.04,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":4,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":22.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":18.09,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":46077.8,"label":"УДС","unit":"грн"},"Доля УДС":{"value":18.33,"label":"Доля УДС","unit":"%"}}},{"id":6,"name":"Троя Андрій Васильович","position":"продавец-консультант","initials":"ТА","gradient":"linear-gradient(135deg, #30cfd0 0%, #330867 100%)","metrics":{"ТО":{"value":202308.3,"label":"ТО","unit":"грн"},"Шт.":{"value":38,"label":"Шт.","unit":"шт"},"Чеки":{"value":29,"label":"Чеки","unit":"шт"},"ASP":{"value":5323.9,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":6976.15,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.31,"label":"КПЧ","unit":""},"ACC":{"value":34847.7,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":17.23,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":5543.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":2.74,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":3,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":14.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":10.55,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":46549.9,"label":"УДС","unit":"грн"},"Доля УДС":{"value":23.01,"label":"Доля УДС","unit":"%"}}},{"id":7,"name":"Пінчук Поліна Вікторівна","position":"продавец-консультант","initials":"ПП","gradient":"linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)","metrics":{"ТО":{"value":174384.7,"label":"ТО","unit":"грн"},"Шт.":{"value":39,"label":"Шт.","unit":"шт"},"Чеки":{"value":27,"label":"Чеки","unit":"шт"},"ASP":{"value":4471.4,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":6458.69,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":1.44,"label":"КПЧ","unit":""},"ACC":{"value":24726.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":14.18,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":3096.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":1.78,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":1,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":13.49,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":11.5,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":41798.7,"label":"УДС","unit":"грн"},"Доля УДС":{"value":23.97,"label":"Доля УДС","unit":"%"}}},{"id":8,"name":"Котенков Нікіта Олександрович","position":"продавец-консультант","initials":"КН","gradient":"linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)","metrics":{"ТО":{"value":88727.7,"label":"ТО","unit":"грн"},"Шт.":{"value":45,"label":"Шт.","unit":"шт"},"Чеки":{"value":22,"label":"Чеки","unit":"шт"},"ASP":{"value":1971.73,"label":"ASP","unit":"грн"},"Ср. Чек":{"value":4033.08,"label":"Ср. Чек","unit":"грн"},"КПЧ":{"value":2.05,"label":"КПЧ","unit":""},"ACC":{"value":27342.5,"label":"ACC","unit":"грн"},"% Доля ACC":{"value":30.82,"label":"% Доля ACC","unit":"%"},"Послуги грн":{"value":99.0,"label":"Послуги грн","unit":"грн"},"Доля Послуг":{"value":0.11,"label":"Доля Послуг","unit":"%"},"ПЧ":{"value":0,"label":"ПЧ","unit":"шт"},"Конверсія ПК":{"value":10.99,"label":"Конверсія ПК","unit":"%"},"Конверсія ПК Offline":{"value":8.5,"label":"Конверсія ПК Offline","unit":"%"},"УДС":{"value":0.0,"label":"УДС","unit":"грн"},"Доля УДС":{"value":0.0,"label":"Доля УДС","unit":"%"}}}];
+<div class="summary" id="summary"></div>
 
-        async function loadData() {
-            try {
-                // Спочатку пробуємо завантажити з JSON файлу
-                const response = await fetch('sales-data.json');
-                if (!response.ok) throw new Error('Failed to load');
-                const data = await response.json();
-                
-                // Перший елемент - магазин, решта - продавці
-                const storeData = data[0];
-                salesTeam = data.slice(1);
-                
-                renderStoreCard(storeData);
-                renderTeamGrid();
-            } catch (error) {
-                console.log('Використовую вбудовані дані');
-                // Використовуємо вбудовані дані
-                const storeData = EMBEDDED_DATA[0];
-                salesTeam = EMBEDDED_DATA.slice(1);
-                
-                renderStoreCard(storeData);
-                renderTeamGrid();
-            }
+</div>
+<script>
+// ===== DATA =====
+const CLUSTERS=[
+  {id:0,label:'0',toMin:40000000,toMax:Infinity,kMult:1.45},
+  {id:1,label:'1',toMin:27000000,toMax:40000000,kMult:1.35},
+  {id:2,label:'2',toMin:22000000,toMax:27000000,kMult:1.25},
+  {id:3,label:'3',toMin:16000000,toMax:22000000,kMult:1.20},
+  {id:4,label:'4',toMin:12000000,toMax:16000000,kMult:1.15},
+  {id:5,label:'5',toMin: 9500000,toMax:12000000,kMult:1.05},
+  {id:6,label:'6',toMin: 6500000,toMax: 9500000,kMult:1.00},
+  {id:7,label:'7',toMin: 5000000,toMax: 6500000,kMult:0.95},
+  {id:8,label:'8',toMin:       0,toMax: 5000000,kMult:0.90},
+];
+
+// Порядок місяців: Квітень(3),Травень(4),Червень(5),Липень(6),Серпень(7),Вересень(8),Жовтень(9),Листопад(10),Грудень(11),Січень(0),Лютий(1),Березень(2)
+// null = немає даних, використовуємо Київ як базовий
+const BASE=[0.73,0.76,0.83,0.87,0.96,0.99,1.01,1.41,1.54,0.96,0.91,1.03];
+
+const CITIES=[
+  {name:'Біла Церква',   kTer:1.00, m:[0.72,0.75,0.84,0.93,1.05,1.01,1.01,1.45,1.49,0.93,0.88,0.94]},
+  {name:'Бердянка',      kTer:1.00, m:null},
+  {name:'Бориспіль',     kTer:1.00, m:null},
+  {name:'Бровари',       kTer:1.00, m:null},
+  {name:'Буча',          kTer:1.00, m:null},
+  {name:'Вараш',         kTer:1.00, m:null},
+  {name:'Вінниця',       kTer:1.00, m:null},
+  {name:'Вишневе',       kTer:1.00, m:null},
+  {name:'Вознесенськ',   kTer:1.00, m:null},
+  {name:'Дніпро',        kTer:1.00, m:null},
+  {name:'Дрогобич',      kTer:1.00, m:null},
+  {name:'Житомир',       kTer:1.00, m:null},
+  {name:'Запоріжжя',     kTer:1.00, m:null},
+  {name:'Івано-Франківськ',kTer:1.00,m:null},
+  {name:'Ізмаїл',        kTer:1.00, m:null},
+  {name:'Ірпінь',        kTer:1.00, m:null},
+  {name:'Кам\'янець-Подільський',kTer:1.00,m:null},
+  {name:'Кам\'янське',   kTer:1.00, m:null},
+  {name:'Київ',          kTer:1.05, m:[0.73,0.76,0.83,0.87,0.96,0.99,1.01,1.41,1.54,0.96,0.91,1.03]},
+  {name:'Коваль',        kTer:1.00, m:null},
+  {name:'Конотоп',       kTer:1.00, m:null},
+  {name:'Коростень',     kTer:1.00, m:null},
+  {name:'Краматорськ',   kTer:1.00, m:null},
+  {name:'Кременчук',     kTer:1.00, m:null},
+  {name:'Кривий Ріг',    kTer:1.00, m:null},
+  {name:'Кропивницький', kTer:1.00, m:null},
+  {name:'Лубни',         kTer:1.00, m:null},
+  {name:'Луцьк',         kTer:1.00, m:null},
+  {name:'Львів',         kTer:1.00, m:null},
+  {name:'Миргород',      kTer:1.00, m:null},
+  {name:'Мукачево',      kTer:1.00, m:null},
+  {name:'Надвірна',      kTer:1.00, m:null},
+  {name:'Ніжин',         kTer:1.00, m:null},
+  {name:'Нетішин',       kTer:1.00, m:null},
+  {name:'Миколаїв',      kTer:1.00, m:null},
+  {name:'Нікополь',      kTer:1.00, m:null},
+  {name:'Обухів',        kTer:1.00, m:[0.72,0.74,0.85,0.97,1.00,0.99,1.03,1.35,1.53,0.98,0.87,0.98]},
+  {name:'Одеса',         kTer:1.00, m:null},
+  {name:'Павлоград',     kTer:1.00, m:null},
+  {name:'Парканне',      kTer:1.00, m:null},
+  {name:'Південноукраїнськ',kTer:1.00,m:null},
+  {name:'Подільськ',     kTer:1.00, m:null},
+  {name:'Покров',        kTer:1.00, m:null},
+  {name:'Полтава',       kTer:1.00, m:null},
+  {name:'Покутки',       kTer:1.00, m:null},
+  {name:'Рівне',         kTer:1.00, m:null},
+  {name:'Самер',         kTer:1.00, m:null},
+  {name:'Сімбір',        kTer:1.00, m:null},
+  {name:'Слов\'янськ',   kTer:1.00, m:null},
+  {name:'Сокільники',    kTer:1.00, m:null},
+  {name:'Стрий',         kTer:1.00, m:null},
+  {name:'Суми',          kTer:1.00, m:null},
+  {name:'Тернопіль',     kTer:1.00, m:null},
+  {name:'Ужгород',       kTer:1.00, m:null},
+  {name:'Умань',         kTer:1.00, m:null},
+  {name:'Фастів',        kTer:1.00, m:[0.73,0.76,0.88,0.97,1.05,1.01,1.05,1.38,1.48,0.96,0.82,0.91]},
+  {name:'Харків',        kTer:1.00, m:[0.73,0.76,0.88,0.97,1.05,1.01,1.05,1.38,1.48,0.96,0.82,0.91]},
+  {name:'Херсон',        kTer:1.00, m:null},
+  {name:'Хмельницький',  kTer:1.00, m:null},
+  {name:'Хуст',          kTer:1.00, m:null},
+  {name:'Чабани',        kTer:1.00, m:[0.75,0.78,0.83,0.89,0.97,0.99,1.01,1.38,1.53,0.96,0.89,1.00]},
+  {name:'Черкаси',       kTer:1.00, m:null},
+  {name:'Чернігів',      kTer:1.00, m:null},
+  {name:'Чернівці',      kTer:1.00, m:null},
+  {name:'Чорноморськ',   kTer:1.00, m:null},
+  {name:'Шепетівка',     kTer:1.00, m:null},
+  {name:'Шептицький',    kTer:1.00, m:null},
+  {name:'Шостка',        kTer:1.00, m:null},
+];
+
+const MONTHS=[
+  {n:'Квітень',q:1},{n:'Травень',q:1},{n:'Червень',q:1},
+  {n:'Липень',q:2},{n:'Серпень',q:2},{n:'Вересень',q:2},
+  {n:'Жовтень',q:3},{n:'Листопад',q:3},{n:'Грудень',q:3},
+  {n:'Січень',q:4},{n:'Лютий',q:4},{n:'Березень',q:4},
+];
+const QC=['q1','q2','q3','q4'];
+const QL=['1 квартал','2 квартал','3 квартал','4 квартал'];
+
+let factSales=new Array(12).fill(null);
+let chartInstance=null;
+
+// ===== HELPERS =====
+function fmt(n){if(n==null||isNaN(n))return'—';return Math.round(n).toLocaleString('uk-UA')}
+function fmtP(n){if(n==null)return'—';return(n*100).toFixed(0)+'%'}
+function cityData(){return CITIES[parseInt(document.getElementById('citySelect').value)]}
+function getKTer(){return parseFloat(document.getElementById('kTer').value)||1.00}
+function curCl(){return parseInt(document.getElementById('clusterSelect').value)}
+function nextCl(){const c=curCl();return c>0?c-1:null}
+function getKSez(i){const c=cityData();return c.m?c.m[i]:BASE[i]}
+
+// Залік ТО — IF(f2>0): (f0/k0+f1/k1+f2/k2)/3; IF(f1>0): (f0/k0+f1/k1+p2/k2)/3; IF(f0>0): (f0/k0+p1/k1+p2/k2)/3
+function calcZTO(facts,ks,plansC){
+  const[f0,f1,f2]=[facts[0],facts[1],facts[2]];
+  const[k0,k1,k2]=ks;
+  const[p0,p1,p2]=plansC;
+  if(f2>0) return((f0||0)/k0+(f1||0)/k1+f2/k2)/3;
+  if(f1>0) return((f0||0)/k0+f1/k1+p2/k2)/3;
+  if(f0>0) return(f0/k0+p1/k1+p2/k2)/3;
+  return null;
+}
+
+// Залік К обігу = kMult кластера в який потрапляє залік ТО кварталу
+function calcZK(zto){
+  if(zto===null)return null;
+  for(let i=0;i<CLUSTERS.length;i++){
+    if(zto>=CLUSTERS[i].toMin)return CLUSTERS[i].kMult;
+  }
+  return CLUSTERS[CLUSTERS.length-1].kMult;
+}
+
+// ===== INIT =====
+function initCitySelect(){
+  const sel=document.getElementById('citySelect');
+  CITIES.forEach((c,i)=>{
+    const o=document.createElement('option');
+    o.value=i; o.textContent=c.name+(c.m?'':' *');
+    if(c.name==='Київ')o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function renderClusterRef(){
+  const cur=curCl(),nxt=nextCl();
+  const grid=document.getElementById('clusterRefGrid');
+  const sel=document.getElementById('clusterRefSelect');
+  grid.innerHTML=''; sel.innerHTML='';
+  CLUSTERS.forEach(cl=>{
+    const isA=cl.id===cur,isN=cl.id===nxt;
+    const fmtM=v=>v===Infinity?'∞':((v/1e6)%1===0?(v/1e6).toFixed(0):(v/1e6).toFixed(1))+'млн';
+    const mx=fmtM(cl.toMax);
+    const mn=fmtM(cl.toMin);
+    const pill=document.createElement('div');
+    pill.className='cp'+(isA?' ac':isN?' nc':'');
+    pill.innerHTML=`<div class="cpn">Кл.${cl.label}${isA?' ◀':isN?' ↑':''}</div><div class="cpr">${mn}–${mx}</div><div class="cpk">×${cl.kMult}</div>`;
+    grid.appendChild(pill);
+    const o=document.createElement('option');
+    o.value=cl.id;
+    o.textContent=`Кластер ${cl.label}: ${mn}–${mx} (×${cl.kMult})${isA?' ◀ поточний':isN?' ↑ ціль':''}`;
+    sel.appendChild(o);
+  });
+}
+
+function renderClusterInfo(){
+  const c=cityData(),cc=CLUSTERS[curCl()],nc=nextCl()!==null?CLUSTERS[nextCl()]:null;
+  document.getElementById('clusterInfo').innerHTML=`
+    <div class="ic"><div class="lbl">Місто</div><div class="val" style="font-size:13px">${c.name}</div><div class="sub">К тер = ${getKTer()}</div></div>
+    <div class="ic"><div class="lbl">Поточний кластер</div><div class="val">${cc.label}</div><div class="sub">ТО мін: ${fmt(cc.toMin)}</div></div>
+    <div class="ic"><div class="lbl">Ціль (підняття)</div><div class="val" style="color:var(--accent2)">${nc?nc.label:'—'}</div><div class="sub">${nc?'ТО мін: '+fmt(nc.toMin):'Макс. кластер'}</div></div>
+    <div class="ic"><div class="lbl">К множення</div><div class="val" style="color:var(--accent3)">${cc.kMult}</div><div class="sub">Залік К обігу</div></div>`;
+}
+
+function renderTable(){
+  const cc=CLUSTERS[curCl()],nc=nextCl()!==null?CLUSTERS[nextCl()]:null;
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  const quarters=[{q:1,idx:[0,1,2]},{q:2,idx:[3,4,5]},{q:3,idx:[6,7,8]},{q:4,idx:[9,10,11]}];
+  let sumZTO=0,cntZTO=0,lastZK=null;
+
+  quarters.forEach((qt,qi)=>{
+    const qc=QC[qi];
+    const facts=qt.idx.map(i=>factSales[i]);
+    const ks=qt.idx.map(i=>getKSez(i));
+    const plansC=qt.idx.map(i=>cc.toMin*getKSez(i));
+    const zto=calcZTO(facts,ks,plansC);
+    const zk=calcZK(zto);
+    if(zto!==null){sumZTO+=zto;cntZTO++;}
+    if(zk!==null)lastZK=zk;
+
+    qt.idx.forEach((mi,qmi)=>{
+      const ks_m=getKSez(mi);
+      const fact=factSales[mi];
+      const [k0,k1,k2]=[getKSez(qt.idx[0]),getKSez(qt.idx[1]),getKSez(qt.idx[2])];
+      const [f0,f1,f2]=[factSales[qt.idx[0]],factSales[qt.idx[1]],factSales[qt.idx[2]]];
+
+      // Ціль кварталу = toMin (середнє ТО/Ксез за квартал повинне = toMin)
+      // Квартальна сума = toMin*k0 + toMin*k1 + toMin*k2 = toMin*(k0+k1+k2)
+      // Але формула в гугл-таблиці: (f0/k0 + f1/k1 + f2/k2)/3 >= toMin
+      // => f0/k0 + f1/k1 + f2/k2 >= toMin*3
+      // Plan для місяця N = (toMin*3 - вже_набрано_нормалізовано) * kN_місяця / кількість_залишившихся
+
+      // Plan підтвердження (pC)
+      const calcPlan=(toMin,k0,k1,k2,f0,f1,f2,qmi)=>{
+        const target=toMin*3; // ціль суми нормалізованих факт/ксез * ксез місяця
+        if(qmi===0){
+          // Місяць 1: якщо ще немає факту — базовий план; якщо є — показуємо факт (або залишок)
+          if(f2>0||f1>0){
+            // Весь квартал вже відомий частково, але план 1-го — базовий
+            return toMin*k0;
+          }
+          return toMin*k0;
+        } else if(qmi===1){
+          // Місяць 2:
+          if(f2>0){
+            // 3-й місяць вже є — показуємо базовий план
+            return toMin*k1;
+          } else if(f0>0){
+            // Є тільки перший факт: треба щоб (f0/k0 + plan1/k1 + plan2/k2)/3 = toMin
+            // plan1/k1 + plan2/k2 = target - f0/k0
+            // Розподіляємо порівну нормалізовано: plan1/k1 = plan2/k2 = (target - f0/k0)/2
+            const remaining=(target - (f0||0)/k0);
+            return Math.max(0, (remaining/2)*k1);
+          } else {
+            return toMin*k1;
+          }
+        } else {
+          // Місяць 3 (qmi===2):
+          if(f2>0){
+            return toMin*k2;
+          } else if(f1>0){
+            // Є факти 1 і 2: plan3 = (target - f0/k0 - f1/k1)*k2
+            return Math.max(0, (target - (f0||0)/k0 - f1/k1)*k2);
+          } else if(f0>0){
+            // Є тільки перший факт: plan2 і plan3 рівні нормалізовано
+            const remaining=(target - f0/k0);
+            return Math.max(0, (remaining/2)*k2);
+          } else {
+            return toMin*k2;
+          }
         }
+      };
 
-        function formatNumber(num) {
-            return new Intl.NumberFormat('uk-UA', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            }).format(num);
+      const pC=calcPlan(cc.toMin,k0,k1,k2,f0,f1,f2,qmi);
+      const pR=nc?calcPlan(nc.toMin,k0,k1,k2,f0,f1,f2,qmi):null;
+      const tr=document.createElement('tr');
+      tr.className=qc+'-row';
+      const qLabel=qmi===0?`<span class="ql ${qc}-label">${QL[qi]}</span>`:'';
+      const ztoCell=qmi===2?`<span class="zc ${zto!==null?'ok':'em'}">${zto!==null?fmt(zto):'—'}</span>`:'';
+      const zkCell=qmi===2?`<span class="zck ${zk!=null?'ok':''}">${zk!=null?'×'+zk:'—'}</span>`:'';
+      const factVal=fact!==null?Math.round(fact).toLocaleString('uk-UA'):'';
+      tr.innerHTML=`
+        <td>${qLabel}</td>
+        <td class="mc">${MONTHS[mi].n}</td>
+        <td class="kc">${fmtP(ks_m)}</td>
+        <td class="ic2"><input type="text" id="fact_${mi}" placeholder="—" value="${factVal}" onchange="onFact(${mi},this.value)" onfocus="this.select()"></td>
+        <td class="cc">${pR!==null?fmt(pR):'—'}</td>
+        <td class="cc m">${fmt(pC)}</td>
+        <td>${ztoCell}</td>
+        <td>${zkCell}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+  renderSummary(cntZTO>0?sumZTO:null,lastZK,cc,nc);
+  renderChart();
+  renderMobileTable();
+}
+
+function renderMobileTable(){
+  const cc=CLUSTERS[curCl()],nc=nextCl()!==null?CLUSTERS[nextCl()]:null;
+  const mob=document.getElementById('tableMobile');
+  mob.innerHTML='';
+  const quarters=[{q:1,idx:[0,1,2],qc:'q1',ql:'1 квартал'},{q:2,idx:[3,4,5],qc:'q2',ql:'2 квартал'},{q:3,idx:[6,7,8],qc:'q3',ql:'3 квартал'},{q:4,idx:[9,10,11],qc:'q4',ql:'4 квартал'}];
+  const isLight=document.documentElement.classList.contains('light');
+  const qColors=isLight?{'q1':'#1d4ed8','q2':'#047857','q3':'#b45309','q4':'#b91c1c'}:{'q1':'#93c5fd','q2':'#6ee7b7','q3':'#fcd34d','q4':'#fca5a5'};
+  const qBg={'q1':'rgba(59,130,246,.18)','q2':'rgba(16,185,129,.18)','q3':'rgba(245,158,11,.18)','q4':'rgba(239,68,68,.18)'};
+
+  quarters.forEach(qt=>{
+    const facts=qt.idx.map(i=>factSales[i]);
+    const ks=qt.idx.map(i=>getKSez(i));
+    const plansC=qt.idx.map(i=>cc.toMin*getKSez(i));
+    const zto=calcZTO(facts,ks,plansC);
+    const zk=calcZK(zto);
+
+    const qBlock=document.createElement('div');
+    qBlock.className='mob-quarter-block';
+
+    const qHead=document.createElement('div');
+    qHead.className='mob-quarter';
+    qHead.style.cssText=`color:${qColors[qt.qc]};background:${qBg[qt.qc]}`;
+    qHead.innerHTML=`<span class="mob-ql" style="background:${qBg[qt.qc]};color:${qColors[qt.qc]}">${qt.ql}</span>`;
+    qBlock.appendChild(qHead);
+    mob.appendChild(qBlock);
+
+    qt.idx.forEach((mi,qmi)=>{
+      const ks_m=getKSez(mi);
+      const fact=factSales[mi];
+      const [k0,k1,k2]=[getKSez(qt.idx[0]),getKSez(qt.idx[1]),getKSez(qt.idx[2])];
+      const [f0,f1,f2]=[factSales[qt.idx[0]],factSales[qt.idx[1]],factSales[qt.idx[2]]];
+      const calcPlan=(toMin,k0,k1,k2,f0,f1,f2,qmi)=>{
+        const target=toMin*3;
+        if(qmi===0){
+          return toMin*k0;
+        } else if(qmi===1){
+          if(f2>0){
+            return toMin*k1;
+          } else if(f0>0){
+            const remaining=(target - (f0||0)/k0);
+            return Math.max(0, (remaining/2)*k1);
+          } else {
+            return toMin*k1;
+          }
+        } else {
+          if(f2>0){
+            return toMin*k2;
+          } else if(f1>0){
+            return Math.max(0, (target - (f0||0)/k0 - f1/k1)*k2);
+          } else if(f0>0){
+            const remaining=(target - f0/k0);
+            return Math.max(0, (remaining/2)*k2);
+          } else {
+            return toMin*k2;
+          }
         }
+      };
+      const pC=calcPlan(cc.toMin,k0,k1,k2,f0,f1,f2,qmi);
+      const pR=nc?calcPlan(nc.toMin,k0,k1,k2,f0,f1,f2,qmi):null;
+      const factVal=fact!==null?Math.round(fact).toLocaleString('uk-UA'):'';
+      const isLastOfQ=qmi===2;
 
-        function renderStoreCard(store) {
-            const card = document.getElementById('storeCard');
-            
-            const to = store.metrics['ТО'] || {};
-            const services = store.metrics['Послуги грн'] || {};
-            const servicesShare = store.metrics['Доля Послуг'] || {};
-            const accShare = store.metrics['% Доля ACC'] || {};
-            const firstChecks = store.metrics['ПЧ'] || {};
-            
-            card.innerHTML = `
-                <div class="team-card store-card" onclick="showDetail(0)">
-                    <div class="card-image" style="background: ${store.gradient}">
-                        ${store.initials}
-                    </div>
-                    <div class="card-content">
-                        <h3>${store.name}</h3>
-                        <p>${store.position}</p>
-                        <div class="card-stats">
-                            <div class="stat" data-metric="ТО">
-                                <span class="stat-value">${formatNumber(to.value / 1000)}К</span>
-                                <span class="stat-label">Товарообіг</span>
-                            </div>
-                            <div class="stat" data-metric="Послуги грн">
-                                <span class="stat-value">${formatNumber(services.value / 1000)}К</span>
-                                <span class="stat-label">Послуги</span>
-                            </div>
-                            <div class="stat" data-metric="Доля Послуг">
-                                <span class="stat-value">${formatNumber(servicesShare.value)}%</span>
-                                <span class="stat-label">Доля послуг</span>
-                            </div>
-                            <div class="stat" data-metric="% Доля ACC">
-                                <span class="stat-value">${formatNumber(accShare.value)}%</span>
-                                <span class="stat-label">Доля ACC</span>
-                            </div>
-                            <div class="stat" data-metric="ПЧ">
-                                <span class="stat-value">${firstChecks.value}</span>
-                                <span class="stat-label">правильні чеки</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+      const row=document.createElement('div');
+      row.className='mob-row';
+      row.style.background=`var(--${qt.qc})`;
+
+      let zalikHtml='';
+      if(isLastOfQ){
+        zalikHtml=`<div class="mob-zalik">
+          <div class="mob-zalik-cell">
+            <div class="mob-lbl">Залік ТО</div>
+            <span class="mob-zto ${zto!==null?'':'em'}">${zto!==null?fmt(zto):'—'}</span>
+          </div>
+          <div class="mob-zalik-cell">
+            <div class="mob-lbl">К обігу</div>
+            <span class="mob-zck">${zk!==null?'×'+zk:'—'}</span>
+          </div>
+        </div>`;
+      }
+
+      row.innerHTML=`
+        <div class="mob-month">
+          <span class="mob-month-name">${MONTHS[mi].n}</span>
+          <span class="mob-ksez">${fmtP(ks_m)}</span>
+        </div>
+        <div class="mob-fact-wrap mob-cell">
+          <div class="mob-lbl">Факт. ТО</div>
+          <input class="mob-fact-input" type="text" id="mob_fact_${mi}" placeholder="—" value="${factVal}" onchange="onFact(${mi},this.value)" onfocus="this.select()">
+        </div>
+        <div class="mob-cell"><div class="mob-lbl">План підняття</div><div class="mob-val accent">${pR!==null?fmt(pR):'—'}</div></div>
+        <div class="mob-cell"><div class="mob-lbl">План підтвердж.</div><div class="mob-val muted">${fmt(pC)}</div></div>
+        ${zalikHtml}`;
+      qBlock.appendChild(row);
+    });
+  });
+}
+
+function renderSummary(zto,zk,cc,nc){
+  document.getElementById('summary').innerHTML=`
+    <div class="sc blue"><div class="sl">Залік ТО</div><div class="sv">${zto!==null?fmt(zto):'—'}</div><div class="ss">Сума заліків по кварталах</div></div>
+    <div class="sc green"><div class="sl">Залік К обігу</div><div class="sv">${zk!==null?'×'+zk:'—'}</div><div class="ss">К множення поточного кластера ${cc.label}</div></div>
+    <div class="sc yellow"><div class="sl">ТО для підняття</div><div class="sv" style="font-size:16px">${nc?fmt(nc.toMin):'—'}</div><div class="ss">${nc?'Мінімум кластеру '+nc.label:'Максимальний кластер'}</div></div>
+    <div class="sc red"><div class="sl">ТО для підтвердження</div><div class="sv" style="font-size:16px">${fmt(cc.toMin)}</div><div class="ss">Мінімум кластеру ${cc.label}</div></div>`;
+}
+
+function renderChart(){
+  const isLight=document.documentElement.classList.contains('light');
+  const cc=CLUSTERS[curCl()],nc=nextCl()!==null?CLUSTERS[nextCl()]:null;
+  const labels=MONTHS.map(m=>m.n);
+  const factData=factSales.map(f=>f!==null&&f>0?f:null);
+  const planR=MONTHS.map((_,i)=>nc?Math.round(nc.toMin*getKSez(i)):null);
+  const planC=MONTHS.map((_,i)=>Math.round(cc.toMin*getKSez(i)));
+  const ctx=document.getElementById('toChart').getContext('2d');
+  if(chartInstance)chartInstance.destroy();
+  chartInstance=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {
+          label:'Факт ТО',
+          data:factData,
+          backgroundColor:factData.map((v,i)=>{
+            if(!v)return'rgba(59,130,246,.12)';
+            if(nc&&v>=planR[i])return'rgba(16,185,129,.65)';
+            if(v>=planC[i])return'rgba(59,130,246,.65)';
+            return'rgba(239,68,68,.55)';
+          }),
+          borderColor:factData.map((v,i)=>{
+            if(!v)return'rgba(59,130,246,.3)';
+            if(nc&&v>=planR[i])return'#10b981';
+            if(v>=planC[i])return'#3b82f6';
+            return'#ef4444';
+          }),
+          borderWidth:1,borderRadius:4,order:3
+        },
+        {
+          label:'План підняття',data:planR,type:'line',
+          borderColor:'rgba(16,185,129,.75)',backgroundColor:'transparent',
+          borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:'#10b981',
+          tension:.3,order:1
+        },
+        {
+          label:'План підтвердження',data:planC,type:'line',
+          borderColor:'rgba(245,158,11,.75)',backgroundColor:'transparent',
+          borderWidth:2,borderDash:[6,4],pointRadius:3,pointBackgroundColor:'#f59e0b',
+          tension:.3,order:2
         }
-
-        function renderTeamGrid() {
-            const grid = document.getElementById('teamGrid');
-            let html = '';
-            
-            salesTeam.forEach(person => {
-                const to = person.metrics['ТО'] || {};
-                const services = person.metrics['Послуги грн'] || {};
-                const servicesShare = person.metrics['Доля Послуг'] || {};
-                const accShare = person.metrics['% Доля ACC'] || {};
-                const firstChecks = person.metrics['ПЧ'] || {};
-                
-                html += `
-                    <div class="team-card" onclick="showDetail(${person.id})">
-                        <div class="card-image" style="background: ${person.gradient}">
-                            ${person.initials}
-                        </div>
-                        <div class="card-content">
-                            <h3>${person.name}</h3>
-                            <p>${person.position}</p>
-                            <div class="card-stats">
-                                <div class="stat" data-metric="ТО">
-                                    <span class="stat-value">${formatNumber(to.value / 1000)}К</span>
-                                    <span class="stat-label">Товарообіг</span>
-                                </div>
-                                <div class="stat" data-metric="Послуги грн">
-                                    <span class="stat-value">${formatNumber(services.value / 1000)}К</span>
-                                    <span class="stat-label">Послуги</span>
-                                </div>
-                                <div class="stat" data-metric="Доля Послуг">
-                                    <span class="stat-value">${formatNumber(servicesShare.value)}%</span>
-                                    <span class="stat-label">Доля послуг</span>
-                                </div>
-                                <div class="stat" data-metric="% Доля ACC">
-                                    <span class="stat-value">${formatNumber(accShare.value)}%</span>
-                                    <span class="stat-label">Доля ACC</span>
-                                </div>
-                                <div class="stat" data-metric="ПЧ">
-                                    <span class="stat-value">${firstChecks.value}</span>
-                                    <span class="stat-label">правильні чеки</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            grid.innerHTML = html;
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:isLight?'#475569':'#8899b4',font:{family:'Geologica',size:10},usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{
+          backgroundColor:isLight?'#ffffff':'#141820',borderColor:isLight?'#d0daea':'#252d3d',borderWidth:1,
+          titleColor:isLight?'#0f172a':'#e8edf5',bodyColor:isLight?'#475569':'#8899b4',
+          callbacks:{label(ctx){const v=ctx.raw;if(v==null)return ctx.dataset.label+': —';return ctx.dataset.label+': '+Math.round(v).toLocaleString('uk-UA')}}
         }
+      },
+      scales:{
+        x:{grid:{color:isLight?'rgba(148,163,184,.25)':'rgba(37,45,61,.5)'},ticks:{color:isLight?'#475569':'#8899b4',font:{family:'Geologica',size:9}}},
+        y:{grid:{color:isLight?'rgba(148,163,184,.25)':'rgba(37,45,61,.5)'},ticks:{color:isLight?'#475569':'#8899b4',font:{family:'Geologica',size:9},callback(v){return(v/1e6).toFixed(0)+' млн'}}}
+      }
+    }
+  });
+}
 
-        function showDetail(id) {
-            let person;
-            
-            if (id === 0) {
-                // Використовуємо вбудовані дані магазину
-                person = EMBEDDED_DATA[0];
-                renderDetailPage(person);
-                return;
-            }
-            
-            person = salesTeam.find(p => p.id === id);
-            if (!person) return;
-            
-            renderDetailPage(person);
-        }
+// ===== EVENTS =====
+function onFact(i,val){
+  const clean=val.replace(/[\s\u00a0]/g,'').replace(',','.');
+  const num=parseFloat(clean);
+  factSales[i]=isNaN(num)||val.trim()===''?null:num;
+  const inp=document.getElementById('fact_'+i);
+  if(factSales[i]!==null)inp.value=Math.round(factSales[i]).toLocaleString('uk-UA');
+  calculate();
+}
+function onClusterChange(){renderClusterRef();renderClusterInfo();renderTable()}
+function onCityChange(){
+  const c=cityData();
+  document.getElementById('kTer').value=c.kTer;
+  renderClusterRef();renderClusterInfo();renderTable();
+}
+function calculate(){renderClusterInfo();renderTable()}
+function resetAll(){
+  factSales=new Array(12).fill(null);
+  document.querySelectorAll('input[id^="fact_"]').forEach(i=>i.value='');
+  calculate();
+}
 
-        function renderDetailPage(person) {
-            document.getElementById('home-page').style.display = 'none';
-            document.getElementById('backBtn').style.display = 'block';
-            
-            const detailPage = document.getElementById('detail-page');
-            detailPage.classList.add('active');
+// ===== THEME =====
+function toggleTheme(){
+  const isLight=document.documentElement.classList.toggle('light');
+  document.getElementById('themeBtn').textContent=isLight?'☀️':'🌙';
+  localStorage.setItem('theme',isLight?'light':'dark');
+  renderChart();
+}
+(function initTheme(){
+  const saved=localStorage.getItem('theme');
+  if(saved==='light'){document.documentElement.classList.add('light');document.getElementById('themeBtn').textContent='☀️';}
+})();
 
-            // Топ метрики з кольорами
-            const topKeys = ['ТО', 'Послуги грн', 'Доля Послуг', '% Доля ACC', 'ПЧ', 'Конверсія ПК', 'Доля УДС'];
-            let topMetricsHtml = '';
-            topKeys.forEach(key => {
-                const metric = person.metrics[key];
-                if (metric) {
-                    topMetricsHtml += `
-                        <div class="metric-card" data-metric="${key}">
-                            <div class="metric-value">${formatNumber(metric.value)}${metric.unit}</div>
-                            <div class="metric-label">${metric.label}</div>
-                        </div>
-                    `;
-                }
-            });
-
-            // Решта метрик
-            let detailedMetricsHtml = '';
-            Object.keys(person.metrics).forEach(key => {
-                if (!topKeys.includes(key)) {
-                    const metric = person.metrics[key];
-                    detailedMetricsHtml += `
-                        <div class="detailed-metric">
-                            <h3>${metric.label}</h3>
-                            <div class="detailed-metric-value">${formatNumber(metric.value)}</div>
-                            <div class="detailed-metric-unit">${metric.unit}</div>
-                        </div>
-                    `;
-                }
-            });
-
-            detailPage.innerHTML = `
-                <div class="detail-image" style="background: ${person.gradient}">${person.initials}</div>
-                <div class="detail-info">
-                    <h1>${person.name}</h1>
-                    <p class="position">${person.position}</p>
-                    <div class="metrics-grid">${topMetricsHtml}</div>
-                    ${detailedMetricsHtml ? `<h2 class="detailed-section-title">Додаткові показники</h2><div class="detailed-metrics">${detailedMetricsHtml}</div>` : ''}
-                </div>
-            `;
-
-            window.scrollTo(0, 0);
-        }
-
-        function showHome() {
-            document.getElementById('detail-page').classList.remove('active');
-            document.getElementById('home-page').style.display = 'block';
-            document.getElementById('backBtn').style.display = 'none';
-            window.scrollTo(0, 0);
-        }
-
-        loadData();
-    </script>
+initCitySelect();
+renderClusterRef();
+renderClusterInfo();
+renderTable();
+</script>
 </body>
 </html>
